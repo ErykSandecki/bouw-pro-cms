@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
-import TopBar from "../components/TopBar";
 import MilestoneItem from "../components/MilestoneItem";
 import Icon from "../components/Icon";
 import { colors as C } from "../theme";
@@ -12,32 +11,51 @@ const PHASES: PhaseItem[] = [
   { icon: "brush", label: "Finishing", num: 3 },
 ];
 
-const FIELD_INPUTS = [
+const FIELD_INPUTS: {
+  label: string;
+  stateKey: "rooms" | "squareMeters" | "scheduledCompletion" | "location";
+  placeholder: string;
+  icon: string;
+  type: string;
+}[] = [
   {
     label: "Number of Rooms",
+    stateKey: "rooms",
     placeholder: "0",
     icon: "meeting_room",
     type: "number",
   },
   {
     label: "Square Meters (m²)",
+    stateKey: "squareMeters",
     placeholder: "0",
     icon: "square_foot",
     type: "number",
   },
   {
     label: "Scheduled Completion",
+    stateKey: "scheduledCompletion",
     placeholder: "mm/dd/yyyy",
     icon: "calendar_today",
     type: "date",
   },
   {
     label: "Location",
+    stateKey: "location",
     placeholder: "City, Country",
     icon: "location_on",
     type: "text",
   },
 ];
+
+const PROJECT_TYPES = ["Renovations", "New constructions", "Huge scale"] as const;
+type ProjectType = (typeof PROJECT_TYPES)[number];
+
+const SUB_OPTIONS: Record<ProjectType, string[]> = {
+  Renovations: ["Bathrooms", "Homes", "Annexes", "Luxury finishes"],
+  "New constructions": ["Newly built homes", "Luxury finishes", "Annexes"],
+  "Huge scale": ["Offices", "Public facilities"],
+};
 
 let nextId = 3;
 
@@ -46,12 +64,23 @@ interface DashboardPageProps {
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    { id: 1, text: "Site analysis and soil testing completed" },
-    { id: 2, text: "Zoning permits and local authority approval" },
-  ]);
+  const [projectType, setProjectType] = useState<ProjectType | "">("");
+  const [projectSubtype, setProjectSubtype] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectOverview, setProjectOverview] = useState("");
+  const [fieldValues, setFieldValues] = useState({
+    rooms: "",
+    squareMeters: "",
+    scheduledCompletion: "",
+    location: "",
+  });
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [newStep, setNewStep] = useState("");
   const [published, setPublished] = useState(false);
+
+  const setField = (key: keyof typeof fieldValues, value: string) =>
+    setFieldValues((prev) => ({ ...prev, [key]: value }));
 
   const addStep = () => {
     const trimmed = newStep.trim();
@@ -81,6 +110,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const iconInputStyle: React.CSSProperties = {
     ...inputStyle,
     paddingLeft: 42,
+  };
+
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    cursor: "pointer",
+    appearance: "none",
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23888'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 14px center",
+    paddingRight: 36,
   };
 
   const labelStyle: React.CSSProperties = {
@@ -205,10 +244,49 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     }}
                   >
                     <div>
+                      <label style={labelStyle}>Project Type</label>
+                      <select
+                        style={selectStyle}
+                        value={projectType}
+                        onChange={(e) => {
+                          setProjectType(e.target.value as ProjectType);
+                          setProjectSubtype("");
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
+                        onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                      >
+                        <option value="" disabled>Select a project type...</option>
+                        {PROJECT_TYPES.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {projectType && (
+                      <div>
+                        <label style={labelStyle}>Project Subtype</label>
+                        <select
+                          style={selectStyle}
+                          value={projectSubtype}
+                          onChange={(e) => setProjectSubtype(e.target.value)}
+                          onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
+                          onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                        >
+                          <option value="" disabled>Select a subtype...</option>
+                          {SUB_OPTIONS[projectType].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div>
                       <label style={labelStyle}>Project Title</label>
                       <input
                         style={inputStyle}
                         placeholder="e.g. Skyline Residence Phase II"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         onFocus={(e) =>
                           (e.target.style.borderColor = C.primaryContainer)
                         }
@@ -223,6 +301,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                         rows={4}
                         style={{ ...inputStyle, resize: "vertical" }}
                         placeholder="Describe the project scope, design philosophy, and key deliverables..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                         onFocus={(e) =>
                           (e.target.style.borderColor = C.primaryContainer)
                         }
@@ -241,7 +321,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                       }}
                     >
                       {FIELD_INPUTS.map(
-                        ({ label, placeholder, icon, type }) => (
+                        ({ label, stateKey, placeholder, icon, type }) => (
                           <div key={label}>
                             <label style={labelStyle}>{label}</label>
                             <div style={{ position: "relative" }}>
@@ -261,6 +341,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                                 type={type}
                                 placeholder={placeholder}
                                 style={iconInputStyle}
+                                value={fieldValues[stateKey]}
+                                onChange={(e) =>
+                                  setField(stateKey, e.target.value)
+                                }
                                 onFocus={(e) =>
                                   (e.target.style.borderColor =
                                     C.primaryContainer)
@@ -300,13 +384,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     }}
                   >
                     <div>
-                      <label style={labelStyle}>
-                        Primary Technologies Used
-                      </label>
+                      <label style={labelStyle}>Project overview</label>
                       <textarea
                         rows={2}
                         style={{ ...inputStyle, resize: "vertical" }}
                         placeholder="List software, materials, or hardware utilized (e.g. BIM, Solar Glass, Recycled Steel)..."
+                        value={projectOverview}
+                        onChange={(e) => setProjectOverview(e.target.value)}
                         onFocus={(e) =>
                           (e.target.style.borderColor = C.primaryContainer)
                         }
