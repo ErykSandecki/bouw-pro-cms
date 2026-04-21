@@ -4,13 +4,15 @@ import DashboardPage from './pages/DashboardPage'
 import type { Page } from './types'
 
 function App() {
-  const [page, setPage] = useState<Page>('login')
+  const [page, setPage] = useState<Page>(
+    () => localStorage.getItem('bouwpro_auth_token') ? 'dashboard' : 'login'
+  )
 
   if (page === 'login') {
     return <LoginPage onLogin={() => setPage('dashboard')} />
   }
 
-  return <DashboardPage />
+  return <DashboardPage onLogout={() => setPage('login')} />
 }
 
 export default App

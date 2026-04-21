@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import Icon from "../components/Icon";
 import { colors as C } from "../theme";
+import { useFirebase } from "../contexts/FirebaseContext";
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -144,19 +146,35 @@ const BrandingPanel: React.FC = () => (
 );
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const { app } = useFirebase();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (loading) return;
+    setError(null);
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { user } = await signInWithEmailAndPassword(getAuth(app), email, password);
+      const token = await user.getIdToken();
+      localStorage.setItem("bouwpro_auth_token", token);
       onLogin();
-    }, 800);
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+        setError("Invalid email or password.");
+      } else if (code === "auth/too-many-requests") {
+        setError("Too many attempts. Please try again later.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -230,6 +248,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               onBlur={() => setPasswordFocused(false)}
             />
 
+            {error && (
+              <p style={{ color: "#f28b82", fontSize: 13, margin: 0 }}>{error}</p>
+            )}
+
             <button
               type="button"
               onClick={handleSubmit}
@@ -267,7 +289,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       display: "inline-block",
                       width: 16,
                       height: 16,
-                      border: `2px solid ${C.onPrimaryContainer}`,
+                      border: `2px solid ${C.bg}`,
                       borderTopColor: "transparent",
                       borderRadius: "50%",
                       animation: "spin 0.7s linear infinite",

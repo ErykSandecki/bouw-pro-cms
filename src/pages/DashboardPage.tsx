@@ -1,106 +1,155 @@
-import { useState } from 'react'
-import Sidebar from '../components/Sidebar'
-import TopBar from '../components/TopBar'
-import MilestoneItem from '../components/MilestoneItem'
-import Icon from '../components/Icon'
-import { colors as C } from '../theme'
-import type { Milestone, PhaseItem } from '../types'
+import { useState } from "react";
+import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
+import MilestoneItem from "../components/MilestoneItem";
+import Icon from "../components/Icon";
+import { colors as C } from "../theme";
+import type { Milestone, PhaseItem } from "../types";
 
 const PHASES: PhaseItem[] = [
-  { icon: 'engineering', label: 'Preparation', num: 1 },
-  { icon: 'construction', label: 'Build Phase', num: 2 },
-  { icon: 'brush', label: 'Finishing', num: 3 },
-]
+  { icon: "engineering", label: "Preparation", num: 1 },
+  { icon: "construction", label: "Build Phase", num: 2 },
+  { icon: "brush", label: "Finishing", num: 3 },
+];
 
 const FIELD_INPUTS = [
-  { label: 'Number of Rooms', placeholder: '0', icon: 'meeting_room', type: 'number' },
-  { label: 'Square Meters (m²)', placeholder: '0', icon: 'square_foot', type: 'number' },
-  { label: 'Scheduled Completion', placeholder: 'mm/dd/yyyy', icon: 'calendar_today', type: 'date' },
-  { label: 'Location', placeholder: 'City, Country', icon: 'location_on', type: 'text' },
-]
+  {
+    label: "Number of Rooms",
+    placeholder: "0",
+    icon: "meeting_room",
+    type: "number",
+  },
+  {
+    label: "Square Meters (m²)",
+    placeholder: "0",
+    icon: "square_foot",
+    type: "number",
+  },
+  {
+    label: "Scheduled Completion",
+    placeholder: "mm/dd/yyyy",
+    icon: "calendar_today",
+    type: "date",
+  },
+  {
+    label: "Location",
+    placeholder: "City, Country",
+    icon: "location_on",
+    type: "text",
+  },
+];
 
-let nextId = 3
+let nextId = 3;
 
-const DashboardPage: React.FC = () => {
+interface DashboardPageProps {
+  onLogout: () => void;
+}
+
+const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([
-    { id: 1, text: 'Site analysis and soil testing completed' },
-    { id: 2, text: 'Zoning permits and local authority approval' },
-  ])
-  const [newStep, setNewStep] = useState('')
-  const [published, setPublished] = useState(false)
+    { id: 1, text: "Site analysis and soil testing completed" },
+    { id: 2, text: "Zoning permits and local authority approval" },
+  ]);
+  const [newStep, setNewStep] = useState("");
+  const [published, setPublished] = useState(false);
 
   const addStep = () => {
-    const trimmed = newStep.trim()
-    if (!trimmed) return
-    setMilestones((m) => [...m, { id: nextId++, text: trimmed }])
-    setNewStep('')
-  }
+    const trimmed = newStep.trim();
+    if (!trimmed) return;
+    setMilestones((m) => [...m, { id: nextId++, text: trimmed }]);
+    setNewStep("");
+  };
 
-  const deleteStep = (id: number) => setMilestones((m) => m.filter((ms) => ms.id !== id))
+  const deleteStep = (id: number) =>
+    setMilestones((m) => m.filter((ms) => ms.id !== id));
 
   // ── Shared style helpers ──
   const inputStyle: React.CSSProperties = {
-    width: '100%',
+    width: "100%",
     background: C.surfaceLow,
     borderRadius: 6,
-    padding: '10px 14px',
+    padding: "10px 14px",
     color: C.onSurface,
     fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'Inter, sans-serif',
-    transition: 'border-color 0.2s',
+    outline: "none",
+    boxSizing: "border-box",
+    fontFamily: "Inter, sans-serif",
+    transition: "border-color 0.2s",
     border: `1px solid ${C.outlineVar}`,
-  }
+  };
 
-  const iconInputStyle: React.CSSProperties = { ...inputStyle, paddingLeft: 42 }
+  const iconInputStyle: React.CSSProperties = {
+    ...inputStyle,
+    paddingLeft: 42,
+  };
 
   const labelStyle: React.CSSProperties = {
-    display: 'block',
+    display: "block",
     color: C.onSurfaceVar,
     fontSize: 11,
     fontWeight: 600,
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
     marginBottom: 6,
-  }
+  };
 
   const cardStyle: React.CSSProperties = {
     background: C.surface,
     borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    overflow: 'hidden',
+    border: "1px solid rgba(255,255,255,0.08)",
+    overflow: "hidden",
     marginBottom: 20,
-  }
+  };
 
   return (
     <div
       style={{
-        display: 'flex',
-        height: '100vh',
-        fontFamily: 'Inter, sans-serif',
+        display: "flex",
+        height: "100vh",
+        fontFamily: "Inter, sans-serif",
         backgroundColor: C.bg,
-        overflow: 'hidden',
+        overflow: "hidden",
       }}
     >
-      <Sidebar />
+      <Sidebar onLogout={onLogout} />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <TopBar />
-
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         {/* Scrollable main content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
           {/* Breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            {['DASHBOARD', 'PROJECTS'].map((crumb, i) => (
-              <span key={crumb} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {i > 0 && <Icon name="chevron_right" size={14} style={{ color: C.outline }} />}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 4,
+            }}
+          >
+            {["DASHBOARD", "PROJECTS"].map((crumb, i) => (
+              <span
+                key={crumb}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
+                {i > 0 && (
+                  <Icon
+                    name="chevron_right"
+                    size={14}
+                    style={{ color: C.outline }}
+                  />
+                )}
                 <span
                   style={{
                     color: i === 1 ? C.onSurface : C.outline,
                     fontSize: 11,
                     fontWeight: 600,
-                    letterSpacing: '0.08em',
+                    letterSpacing: "0.08em",
                   }}
                 >
                   {crumb}
@@ -109,73 +158,121 @@ const DashboardPage: React.FC = () => {
             ))}
           </div>
 
-          <h1 style={{ color: C.onSurface, fontSize: 22, fontWeight: 600, marginBottom: 2 }}>
-            Initialize New Development
+          <h1
+            style={{
+              color: C.onSurface,
+              fontSize: 22,
+              fontWeight: 600,
+              marginBottom: 2,
+            }}
+          >
+            New Project
           </h1>
           <p style={{ color: C.onSurfaceVar, fontSize: 13, marginBottom: 24 }}>
-            Configure project specifications, architectural details, and phased milestones.
+            Configure project specifications, architectural details, and phased
+            milestones.
           </p>
 
           {/* Two-column layout */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 260px",
+              gap: 20,
+            }}
+          >
             {/* ── Left column ── */}
             <div>
               {/* Core Specs Card */}
               <div style={cardStyle}>
                 <div style={{ height: 3, background: C.primaryContainer }} />
                 <div style={{ padding: 24 }}>
-                  <h2 style={{ color: C.onSurface, fontSize: 18, fontWeight: 600, marginBottom: 20 }}>
+                  <h2
+                    style={{
+                      color: C.onSurface,
+                      fontSize: 18,
+                      fontWeight: 600,
+                      marginBottom: 20,
+                    }}
+                  >
                     Core Specifications
                   </h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 16,
+                    }}
+                  >
                     <div>
                       <label style={labelStyle}>Project Title</label>
                       <input
                         style={inputStyle}
                         placeholder="e.g. Skyline Residence Phase II"
-                        onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
-                        onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                        onFocus={(e) =>
+                          (e.target.style.borderColor = C.primaryContainer)
+                        }
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = C.outlineVar)
+                        }
                       />
                     </div>
                     <div>
                       <label style={labelStyle}>Detailed Description</label>
                       <textarea
                         rows={4}
-                        style={{ ...inputStyle, resize: 'vertical' }}
+                        style={{ ...inputStyle, resize: "vertical" }}
                         placeholder="Describe the project scope, design philosophy, and key deliverables..."
-                        onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
-                        onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                        onFocus={(e) =>
+                          (e.target.style.borderColor = C.primaryContainer)
+                        }
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = C.outlineVar)
+                        }
                       />
                     </div>
 
                     {/* 2x2 grid of fields */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                      {FIELD_INPUTS.map(({ label, placeholder, icon, type }) => (
-                        <div key={label}>
-                          <label style={labelStyle}>{label}</label>
-                          <div style={{ position: 'relative' }}>
-                            <Icon
-                              name={icon}
-                              size={16}
-                              style={{
-                                position: 'absolute',
-                                left: 12,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: C.outline,
-                                pointerEvents: 'none',
-                              }}
-                            />
-                            <input
-                              type={type}
-                              placeholder={placeholder}
-                              style={iconInputStyle}
-                              onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
-                              onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
-                            />
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 16,
+                      }}
+                    >
+                      {FIELD_INPUTS.map(
+                        ({ label, placeholder, icon, type }) => (
+                          <div key={label}>
+                            <label style={labelStyle}>{label}</label>
+                            <div style={{ position: "relative" }}>
+                              <Icon
+                                name={icon}
+                                size={16}
+                                style={{
+                                  position: "absolute",
+                                  left: 12,
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  color: C.outline,
+                                  pointerEvents: "none",
+                                }}
+                              />
+                              <input
+                                type={type}
+                                placeholder={placeholder}
+                                style={iconInputStyle}
+                                onFocus={(e) =>
+                                  (e.target.style.borderColor =
+                                    C.primaryContainer)
+                                }
+                                onBlur={(e) =>
+                                  (e.target.style.borderColor = C.outlineVar)
+                                }
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
@@ -185,64 +282,100 @@ const DashboardPage: React.FC = () => {
               <div style={cardStyle}>
                 <div style={{ height: 3, background: C.tertiaryContainer }} />
                 <div style={{ padding: 24 }}>
-                  <h2 style={{ color: C.onSurface, fontSize: 18, fontWeight: 600, marginBottom: 20 }}>
+                  <h2
+                    style={{
+                      color: C.onSurface,
+                      fontSize: 18,
+                      fontWeight: 600,
+                      marginBottom: 20,
+                    }}
+                  >
                     Technologies & Execution Steps
                   </h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 20,
+                    }}
+                  >
                     <div>
-                      <label style={labelStyle}>Primary Technologies Used</label>
+                      <label style={labelStyle}>
+                        Primary Technologies Used
+                      </label>
                       <textarea
                         rows={2}
-                        style={{ ...inputStyle, resize: 'vertical' }}
+                        style={{ ...inputStyle, resize: "vertical" }}
                         placeholder="List software, materials, or hardware utilized (e.g. BIM, Solar Glass, Recycled Steel)..."
-                        onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
-                        onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                        onFocus={(e) =>
+                          (e.target.style.borderColor = C.primaryContainer)
+                        }
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = C.outlineVar)
+                        }
                       />
                     </div>
 
                     {/* Milestones */}
                     <div>
                       <label style={labelStyle}>Completed Milestones</label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
                         {milestones.map((ms) => (
-                          <MilestoneItem key={ms.id} text={ms.text} onDelete={() => deleteStep(ms.id)} />
+                          <MilestoneItem
+                            key={ms.id}
+                            text={ms.text}
+                            onDelete={() => deleteStep(ms.id)}
+                          />
                         ))}
 
                         {/* Add step row */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            marginTop: 4,
+                          }}
+                        >
                           <input
                             value={newStep}
                             onChange={(e) => setNewStep(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && addStep()}
+                            onKeyDown={(e) => e.key === "Enter" && addStep()}
                             placeholder="Add a new completed step..."
                             style={{
                               flex: 1,
-                              background: 'transparent',
-                              border: 'none',
+                              background: "transparent",
+                              border: "none",
                               borderBottom: `1px solid ${C.outlineVar}`,
-                              padding: '6px 0',
+                              padding: "6px 0",
                               color: C.onSurface,
                               fontSize: 13,
-                              outline: 'none',
-                              fontFamily: 'Inter, sans-serif',
+                              outline: "none",
+                              fontFamily: "Inter, sans-serif",
                             }}
                           />
                           <button
                             type="button"
                             onClick={addStep}
                             style={{
-                              background: 'none',
-                              border: 'none',
+                              background: "none",
+                              border: "none",
                               color: C.primaryContainer,
                               fontSize: 13,
                               fontWeight: 600,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
                               gap: 4,
                               padding: 0,
-                              whiteSpace: 'nowrap',
-                              fontFamily: 'Inter, sans-serif',
+                              whiteSpace: "nowrap",
+                              fontFamily: "Inter, sans-serif",
                             }}
                           >
                             <Icon name="add" size={18} />
@@ -256,28 +389,34 @@ const DashboardPage: React.FC = () => {
               </div>
 
               {/* Phase Gallery */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: 16,
+                }}
+              >
                 {PHASES.map(({ icon, label, num }) => (
                   <div
                     key={label}
                     style={{
                       background: C.surface,
                       borderRadius: 10,
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      border: "1px solid rgba(255,255,255,0.08)",
                       padding: 20,
                     }}
                   >
                     <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
                         gap: 8,
                         marginBottom: 14,
                         color: C.onSurfaceVar,
                         fontSize: 11,
                         fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
                       }}
                     >
                       <Icon name={icon} size={16} />
@@ -285,28 +424,37 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <div
                       style={{
-                        aspectRatio: '1',
+                        aspectRatio: "1",
                         borderRadius: 8,
                         border: `2px dashed ${C.outlineVar}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
                         gap: 8,
-                        cursor: 'pointer',
-                        transition: 'background 0.15s',
+                        cursor: "pointer",
+                        transition: "background 0.15s",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background =
+                          "rgba(255,255,255,0.04)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "transparent")
+                      }
                     >
-                      <Icon name="upload_file" size={28} style={{ color: C.outline }} />
+                      <Icon
+                        name="upload_file"
+                        size={28}
+                        style={{ color: C.outline }}
+                      />
                       <span
                         style={{
                           color: C.outline,
                           fontSize: 9,
                           fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
                         }}
                       >
                         Upload Phase {num}
@@ -318,13 +466,13 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* ── Right column ── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {/* Master Assets */}
               <div
                 style={{
                   background: C.surface,
                   borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: "1px solid rgba(255,255,255,0.08)",
                   padding: 20,
                 }}
               >
@@ -333,8 +481,8 @@ const DashboardPage: React.FC = () => {
                     color: C.onSurfaceVar,
                     fontSize: 10,
                     fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
                     marginBottom: 16,
                   }}
                 >
@@ -343,31 +491,38 @@ const DashboardPage: React.FC = () => {
 
                 {/* Cover image */}
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ ...labelStyle, marginBottom: 10 }}>Main Cover Image</label>
+                  <label style={{ ...labelStyle, marginBottom: 10 }}>
+                    Main Cover Image
+                  </label>
                   <div
                     style={{
                       borderRadius: 6,
-                      overflow: 'hidden',
+                      overflow: "hidden",
                       border: `1px solid ${C.outlineVar}`,
-                      aspectRatio: '16/9',
+                      aspectRatio: "16/9",
                       background: C.surfaceLow,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      transition: "background 0.15s",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = C.surfaceLow)}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.04)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = C.surfaceLow)
+                    }
                   >
-                    <div style={{ textAlign: 'center', color: C.outline }}>
+                    <div style={{ textAlign: "center", color: C.outline }}>
                       <Icon name="add_photo_alternate" size={28} />
                       <div
                         style={{
                           fontSize: 10,
                           marginTop: 6,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.06em',
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
                         }}
                       >
                         Upload Cover
@@ -378,42 +533,64 @@ const DashboardPage: React.FC = () => {
 
                 {/* Gallery */}
                 <div>
-                  <label style={{ ...labelStyle, marginBottom: 10 }}>Project Gallery</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <label style={{ ...labelStyle, marginBottom: 10 }}>
+                    Project Gallery
+                  </label>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 6,
+                    }}
+                  >
                     {[1, 2, 3].map((i) => (
                       <div
                         key={i}
                         style={{
-                          aspectRatio: '1',
+                          aspectRatio: "1",
                           borderRadius: 4,
                           background: C.surfaceLow,
                           border: `1px solid ${C.outlineVar}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          transition: 'background 0.15s',
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          transition: "background 0.15s",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = C.surfaceLow)}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.background =
+                            "rgba(255,255,255,0.06)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.background = C.surfaceLow)
+                        }
                       >
-                        <Icon name="add_photo_alternate" size={20} style={{ color: C.outline }} />
+                        <Icon
+                          name="add_photo_alternate"
+                          size={20}
+                          style={{ color: C.outline }}
+                        />
                       </div>
                     ))}
                     <div
                       style={{
-                        aspectRatio: '1',
+                        aspectRatio: "1",
                         borderRadius: 4,
                         background: C.surfaceLow,
                         border: `1px solid ${C.outlineVar}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
                       }}
                     >
                       <span
-                        style={{ color: C.outline, fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}
+                        style={{
+                          color: C.outline,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                        }}
                       >
                         + More
                       </span>
@@ -427,7 +604,7 @@ const DashboardPage: React.FC = () => {
                 style={{
                   background: C.surface,
                   borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: "1px solid rgba(255,255,255,0.08)",
                   padding: 20,
                 }}
               >
@@ -436,8 +613,8 @@ const DashboardPage: React.FC = () => {
                     color: C.onSurfaceVar,
                     fontSize: 10,
                     fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
                     marginBottom: 12,
                   }}
                 >
@@ -449,48 +626,52 @@ const DashboardPage: React.FC = () => {
                     height: 120,
                     background: C.surfaceLow,
                     border: `1px solid ${C.outlineVar}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    overflow: "hidden",
                   }}
                 >
                   {/* Map grid pattern */}
                   <div
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       inset: 0,
                       opacity: 0.15,
                       backgroundImage:
-                        'linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)',
-                      backgroundSize: '20px 20px',
+                        "linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)",
+                      backgroundSize: "20px 20px",
                     }}
                   />
                   <div
                     style={{
                       width: 32,
                       height: 32,
-                      borderRadius: '50%',
+                      borderRadius: "50%",
                       background: C.primary,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       zIndex: 1,
-                      boxShadow: '0 0 0 8px rgba(255,211,205,0.15)',
+                      boxShadow: "0 0 0 8px rgba(255,211,205,0.15)",
                     }}
                   >
-                    <Icon name="location_on" size={18} style={{ color: C.onPrimaryContainer }} />
+                    <Icon
+                      name="location_on"
+                      size={18}
+                      style={{ color: C.bg }}
+                    />
                   </div>
                 </div>
                 <p
                   style={{
                     marginTop: 8,
-                    textAlign: 'center',
+                    textAlign: "center",
                     color: C.outline,
                     fontSize: 9,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
                   }}
                 >
                   Geographic verification pending for site coordinates.
@@ -498,51 +679,68 @@ const DashboardPage: React.FC = () => {
               </div>
 
               {/* Actions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
                 <button
                   type="button"
                   onClick={() => setPublished(true)}
                   style={{
-                    width: '100%',
-                    background: published ? C.tertiaryContainer : C.primaryContainer,
-                    color: published ? '#002019' : C.onPrimaryContainer,
-                    border: 'none',
+                    width: "100%",
+                    background: published
+                      ? C.tertiaryContainer
+                      : C.primaryContainer,
+                    color: published ? "#002019" : C.bg,
+                    border: "none",
                     borderRadius: 8,
-                    padding: '14px 0',
+                    padding: "14px 0",
                     fontSize: 15,
                     fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'filter 0.2s, background 0.3s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    cursor: "pointer",
+                    transition: "filter 0.2s, background 0.3s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 8,
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: "Inter, sans-serif",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.08)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.filter = 'brightness(1)')}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.filter = "brightness(1.08)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.filter = "brightness(1)")
+                  }
                 >
-                  <Icon name={published ? 'check_circle' : 'publish'} size={20} fill={published ? 1 : 0} />
-                  {published ? 'Published!' : 'Publish Project'}
+                  <Icon
+                    name={published ? "check_circle" : "publish"}
+                    size={20}
+                    fill={published ? 1 : 0}
+                  />
+                  {published ? "Published!" : "Publish Project"}
                 </button>
 
                 <button
                   type="button"
                   style={{
-                    width: '100%',
-                    background: 'transparent',
+                    width: "100%",
+                    background: "transparent",
                     border: `1px solid ${C.outlineVar}`,
                     borderRadius: 8,
-                    padding: '11px 0',
+                    padding: "11px 0",
                     fontSize: 13,
                     fontWeight: 600,
                     color: C.onSurface,
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                    fontFamily: 'Inter, sans-serif',
+                    cursor: "pointer",
+                    transition: "background 0.15s",
+                    fontFamily: "Inter, sans-serif",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background =
+                      "rgba(255,255,255,0.05)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
                 >
                   Save as Draft
                 </button>
@@ -550,20 +748,22 @@ const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    background: "none",
+                    border: "none",
                     color: `${C.error}80`,
                     fontSize: 10,
                     fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    padding: '6px 0',
-                    transition: 'color 0.15s',
-                    fontFamily: 'Inter, sans-serif',
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    padding: "6px 0",
+                    transition: "color 0.15s",
+                    fontFamily: "Inter, sans-serif",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = C.error)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = `${C.error}80`)}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = `${C.error}80`)
+                  }
                 >
                   Discard Project
                 </button>
@@ -573,7 +773,7 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DashboardPage
+export default DashboardPage;
