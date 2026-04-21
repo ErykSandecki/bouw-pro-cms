@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Sidebar from "../components/Sidebar";
 import MilestoneItem from "../components/MilestoneItem";
 import Icon from "../components/Icon";
@@ -110,6 +111,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const setField = (key: keyof typeof fieldValues, value: string) =>
     setFieldValues((prev) => ({ ...prev, [key]: value }));
@@ -168,13 +170,55 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     !!fieldValues.scheduledCompletion.trim() &&
     !!fieldValues.location.trim();
 
+  const uploadFile = async (storage: ReturnType<typeof getStorage>, path: string, file: File) => {
+    const url = await getDownloadURL(await uploadBytes(ref(storage, path), file).then((s) => s.ref));
+    return url;
+  };
+
   const handleSave = async (publish: boolean) => {
     setSubmitted(true);
     if (!isValid()) return;
     setSaving(true);
     try {
       const projectId = crypto.randomUUID();
+      const storage = getStorage(app);
       const db = getFirestore(app);
+      const base = `projects/${projectId}`;
+
+      // 1. Main picture
+      let mainPicture = "";
+      if (coverImage) {
+        setUploadStatus("Uploading main picture…");
+        mainPicture = await uploadFile(storage, `${base}/cover/${coverImage.name}`, coverImage);
+      }
+
+      // 2. Gallery
+      const gallery: string[] = [];
+      if (galleryFiles.length > 0) {
+        setUploadStatus(`Uploading gallery (0 / ${galleryFiles.length})…`);
+        for (let i = 0; i < galleryFiles.length; i++) {
+          setUploadStatus(`Uploading gallery (${i + 1} / ${galleryFiles.length})…`);
+          const url = await uploadFile(storage, `${base}/gallery/${galleryFiles[i].file.name}`, galleryFiles[i].file);
+          gallery.push(url);
+        }
+      }
+
+      // 3. Phase pictures
+      const phases: Record<PhaseKey, string[]> = { Preparation: [], "Build Phase": [], Finishing: [] };
+      for (const phase of (["Preparation", "Build Phase", "Finishing"] as PhaseKey[])) {
+        const files = phaseFiles[phase];
+        if (files.length > 0) {
+          setUploadStatus(`Uploading ${phase} phase (0 / ${files.length})…`);
+          for (let i = 0; i < files.length; i++) {
+            setUploadStatus(`Uploading ${phase} phase (${i + 1} / ${files.length})…`);
+            const url = await uploadFile(storage, `${base}/phases/${phase}/${files[i].file.name}`, files[i].file);
+            phases[phase].push(url);
+          }
+        }
+      }
+
+      // 4. Save to Firestore
+      setUploadStatus("Saving project…");
       await setDoc(doc(db, "projects", projectId), {
         id: projectId,
         projectType,
@@ -187,9 +231,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         scheduledCompletion: fieldValues.scheduledCompletion,
         location: fieldValues.location,
         milestones: milestones.map((m) => m.text),
+        mainPicture,
+        gallery,
+        phases,
         published: publish,
         createdAt: new Date().toISOString(),
       });
+
       if (publish) {
         setPublished(true);
         setTimeout(() => {
@@ -200,12 +248,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           setTitle("");
           setDescription("");
           setProjectOverview("");
-          setFieldValues({
-            rooms: "",
-            squareMeters: "",
-            scheduledCompletion: "",
-            location: "",
-          });
+          setFieldValues({ rooms: "", squareMeters: "", scheduledCompletion: "", location: "" });
           setMilestones([]);
           setCoverImage(null);
           setCoverPreview(null);
@@ -215,6 +258,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       }
     } finally {
       setSaving(false);
+      setUploadStatus(null);
     }
   };
 
@@ -286,6 +330,60 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         overflow: "hidden",
       }}
     >
+      {/* Upload progress modal */}
+      {uploadStatus && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            style={{
+              background: "#1e1412",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 14,
+              padding: "36px 48px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 20,
+              minWidth: 280,
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: 40,
+                height: 40,
+                border: `3px solid rgba(255,255,255,0.12)`,
+                borderTopColor: C.primaryContainer,
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+            <p
+              style={{
+                color: C.onSurface,
+                fontSize: 14,
+                fontWeight: 500,
+                textAlign: "center",
+                margin: 0,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              {uploadStatus}
+            </p>
+          </div>
+        </div>
+      )}
+
       <Sidebar onLogout={onLogout} />
 
       <div
