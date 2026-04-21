@@ -1,4 +1,4 @@
-# Apex CMS
+# BouwPro CMS
 
 A project management and content administration system built with React, TypeScript, and Tailwind CSS.
 
@@ -13,7 +13,7 @@ A project management and content administration system built with React, TypeScr
 ## Project Structure
 
 ```
-apex-cms/
+bouwpro/
 ├── public/
 │   └── favicon.svg
 ├── src/
@@ -70,4 +70,5 @@ Colors and tokens are defined in `src/theme.ts` and `tailwind.config.js`, based 
   - Master assets panel (cover image + gallery)
   - Site context map placeholder
   - Publish / Save as Draft / Discard actions
+
 # bouw-pro-cms
