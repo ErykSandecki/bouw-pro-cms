@@ -697,7 +697,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   />
                   <div
                     onClick={() => coverInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); setCoverDragOver(true); }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setCoverDragOver(true);
+                    }}
                     onDragLeave={() => setCoverDragOver(false)}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -710,7 +713,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                       overflow: "hidden",
                       border: `1px solid ${coverDragOver ? C.primaryContainer : C.outlineVar}`,
                       aspectRatio: "16/9",
-                      background: coverDragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                      background: coverDragOver
+                        ? "rgba(255,255,255,0.06)"
+                        : C.surfaceLow,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -724,7 +729,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                         <img
                           src={coverPreview}
                           alt="Cover preview"
-                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
                         />
                         <div
                           style={{
@@ -738,26 +749,64 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                             opacity: 0,
                             transition: "opacity 0.2s",
                           }}
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.opacity = "1")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.opacity = "0")
+                          }
                         >
-                          <Icon name="swap_horiz" size={24} style={{ color: "#fff" }} />
-                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 6 }}>
+                          <Icon
+                            name="swap_horiz"
+                            size={24}
+                            style={{ color: "#fff" }}
+                          />
+                          <span
+                            style={{
+                              color: "#fff",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              marginTop: 6,
+                            }}
+                          >
                             Replace Image
                           </span>
                         </div>
                       </>
                     ) : (
-                      <div style={{ textAlign: "center", color: C.outline, pointerEvents: "none" }}>
+                      <div
+                        style={{
+                          textAlign: "center",
+                          color: C.outline,
+                          pointerEvents: "none",
+                        }}
+                      >
                         <Icon name="add_photo_alternate" size={28} />
-                        <div style={{ fontSize: 10, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                          {coverDragOver ? "Drop to upload" : "Drag & drop or click"}
+                        <div
+                          style={{
+                            fontSize: 10,
+                            marginTop: 6,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.06em",
+                          }}
+                        >
+                          {coverDragOver
+                            ? "Drop to upload"
+                            : "Drag & drop or click"}
                         </div>
                       </div>
                     )}
                   </div>
                   {coverImage && (
-                    <p style={{ color: C.onSurfaceVar, fontSize: 11, marginTop: 6 }}>
+                    <p
+                      style={{
+                        color: C.onSurfaceVar,
+                        fontSize: 11,
+                        marginTop: 6,
+                      }}
+                    >
                       {coverImage.name}
                     </p>
                   )}
@@ -831,85 +880,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 </div>
               </div>
 
-              {/* Site Context */}
-              <div
-                style={{
-                  background: C.surface,
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  padding: 20,
-                }}
-              >
-                <div
-                  style={{
-                    color: C.onSurfaceVar,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    marginBottom: 12,
-                  }}
-                >
-                  Site Context
-                </div>
-                <div
-                  style={{
-                    borderRadius: 6,
-                    height: 120,
-                    background: C.surfaceLow,
-                    border: `1px solid ${C.outlineVar}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Map grid pattern */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      opacity: 0.15,
-                      backgroundImage:
-                        "linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)",
-                      backgroundSize: "20px 20px",
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      background: C.primary,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      zIndex: 1,
-                      boxShadow: "0 0 0 8px rgba(255,211,205,0.15)",
-                    }}
-                  >
-                    <Icon
-                      name="location_on"
-                      size={18}
-                      style={{ color: C.bg }}
-                    />
-                  </div>
-                </div>
-                <p
-                  style={{
-                    marginTop: 8,
-                    textAlign: "center",
-                    color: C.outline,
-                    fontSize: 9,
-                    letterSpacing: "0.05em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Geographic verification pending for site coordinates.
-                </p>
-              </div>
-
               {/* Actions */}
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
@@ -950,57 +920,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     fill={published ? 1 : 0}
                   />
                   {published ? "Published!" : "Publish Project"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSave(false)}
-                  disabled={saving}
-                  style={{
-                    width: "100%",
-                    background: "transparent",
-                    border: `1px solid ${C.outlineVar}`,
-                    borderRadius: 8,
-                    padding: "11px 0",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: C.onSurface,
-                    cursor: saving ? "wait" : "pointer",
-                    transition: "background 0.15s",
-                    fontFamily: "Inter, sans-serif",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background =
-                      "rgba(255,255,255,0.05)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "transparent")
-                  }
-                >
-                  Save as Draft
-                </button>
-
-                <button
-                  type="button"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: `${C.error}80`,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    cursor: "pointer",
-                    padding: "6px 0",
-                    transition: "color 0.15s",
-                    fontFamily: "Inter, sans-serif",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = C.error)}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = `${C.error}80`)
-                  }
-                >
-                  Discard Project
                 </button>
               </div>
             </div>

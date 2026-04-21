@@ -5,7 +5,7 @@ import { colors as C } from "../theme";
 import type { NavItem } from "../types";
 import { useFirebase } from "../contexts/FirebaseContext";
 
-const NAV_ITEMS: NavItem[] = [{ icon: "account_tree", label: "Projects" }];
+const NAV_ITEMS: NavItem[] = [{ icon: "account_tree", label: "Add project" }];
 
 interface SidebarProps {
   onLogout: () => void;
@@ -13,7 +13,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
   const { app } = useFirebase();
-  const [active, setActive] = useState("Projects");
+  const [active, setActive] = useState("Add project");
 
   const handleLogout = async () => {
     await signOut(getAuth(app));
