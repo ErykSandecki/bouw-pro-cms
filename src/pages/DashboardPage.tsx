@@ -88,6 +88,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverDragOver, setCoverDragOver] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [galleryFiles, setGalleryFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [galleryDragOver, setGalleryDragOver] = useState(false);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  type PhaseKey = "Preparation" | "Build Phase" | "Finishing";
+  const [phaseFiles, setPhaseFiles] = useState<Record<PhaseKey, { file: File; preview: string }[]>>({
+    Preparation: [],
+    "Build Phase": [],
+    Finishing: [],
+  });
+  const [phaseDragOver, setPhaseDragOver] = useState<Record<PhaseKey, boolean>>({
+    Preparation: false,
+    "Build Phase": false,
+    Finishing: false,
+  });
+  const phaseInputRefs = useRef<Record<PhaseKey, HTMLInputElement | null>>({
+    Preparation: null,
+    "Build Phase": null,
+    Finishing: null,
+  });
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -99,6 +118,36 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     if (!file.type.startsWith("image/")) return;
     setCoverImage(file);
     setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleGalleryFiles = (files: FileList) => {
+    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    setGalleryFiles((prev) => [
+      ...prev,
+      ...images.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+    ]);
+  };
+
+  const removeGalleryItem = (index: number) => {
+    setGalleryFiles((prev) => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handlePhaseFiles = (phase: PhaseKey, files: FileList) => {
+    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    setPhaseFiles((prev) => ({
+      ...prev,
+      [phase]: [...prev[phase], ...images.map((file) => ({ file, preview: URL.createObjectURL(file) }))],
+    }));
+  };
+
+  const removePhaseItem = (phase: PhaseKey, index: number) => {
+    setPhaseFiles((prev) => {
+      URL.revokeObjectURL(prev[phase][index].preview);
+      return { ...prev, [phase]: prev[phase].filter((_, i) => i !== index) };
+    });
   };
 
   const reqErr = (val: string) =>
@@ -160,6 +209,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           setMilestones([]);
           setCoverImage(null);
           setCoverPreview(null);
+          setGalleryFiles([]);
+          setPhaseFiles({ Preparation: [], "Build Phase": [], Finishing: [] });
         }, 1500);
       }
     } finally {
@@ -587,72 +638,115 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   gap: 16,
                 }}
               >
-                {PHASES.map(({ icon, label, num }) => (
-                  <div
-                    key={label}
-                    style={{
-                      background: C.surface,
-                      borderRadius: 10,
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      padding: 20,
-                    }}
-                  >
+                {PHASES.map(({ icon, label }) => {
+                  const phase = label as PhaseKey;
+                  const files = phaseFiles[phase];
+                  const dragOver = phaseDragOver[phase];
+                  return (
                     <div
+                      key={label}
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginBottom: 14,
-                        color: C.onSurfaceVar,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
+                        background: C.surface,
+                        borderRadius: 10,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        padding: 20,
                       }}
                     >
-                      <Icon name={icon} size={16} />
-                      {label}
-                    </div>
-                    <div
-                      style={{
-                        aspectRatio: "1",
-                        borderRadius: 8,
-                        border: `2px dashed ${C.outlineVar}`,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background =
-                          "rgba(255,255,255,0.04)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = "transparent")
-                      }
-                    >
-                      <Icon
-                        name="upload_file"
-                        size={28}
-                        style={{ color: C.outline }}
-                      />
-                      <span
+                      <div
                         style={{
-                          color: C.outline,
-                          fontSize: 9,
-                          fontWeight: 700,
-                          letterSpacing: "0.1em",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginBottom: 14,
+                          color: C.onSurfaceVar,
+                          fontSize: 11,
+                          fontWeight: 600,
                           textTransform: "uppercase",
+                          letterSpacing: "0.04em",
                         }}
                       >
-                        Upload Phase {num}
-                      </span>
+                        <Icon name={icon} size={16} />
+                        {label}
+                      </div>
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        style={{ display: "none" }}
+                        ref={(el) => { phaseInputRefs.current[phase] = el; }}
+                        onChange={(e) => { if (e.target.files) handlePhaseFiles(phase, e.target.files); e.target.value = ""; }}
+                      />
+
+                      {files.length === 0 ? (
+                        <div
+                          onClick={() => phaseInputRefs.current[phase]?.click()}
+                          onDragOver={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: true })); }}
+                          onDragLeave={() => setPhaseDragOver((p) => ({ ...p, [phase]: false }))}
+                          onDrop={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: false })); if (e.dataTransfer.files) handlePhaseFiles(phase, e.dataTransfer.files); }}
+                          style={{
+                            borderRadius: 8,
+                            border: `2px dashed ${dragOver ? C.primaryContainer : C.outlineVar}`,
+                            background: dragOver ? "rgba(255,255,255,0.04)" : "transparent",
+                            padding: "20px 0",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                            transition: "border-color 0.15s, background 0.15s",
+                          }}
+                        >
+                          <Icon name="upload_file" size={24} style={{ color: C.outline }} />
+                          <span style={{ color: C.outline, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                            {dragOver ? "Drop images" : "Drag & drop or click"}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+                            {files.map(({ preview }, i) => (
+                              <div key={preview} style={{ position: "relative", aspectRatio: "1", borderRadius: 4, overflow: "hidden" }}>
+                                <img src={preview} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                                <button
+                                  type="button"
+                                  onClick={() => removePhaseItem(phase, i)}
+                                  style={{
+                                    position: "absolute", top: 3, right: 3,
+                                    background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%",
+                                    width: 20, height: 20, display: "flex", alignItems: "center",
+                                    justifyContent: "center", cursor: "pointer", padding: 0,
+                                  }}
+                                >
+                                  <Icon name="close" size={12} style={{ color: "#fff" }} />
+                                </button>
+                              </div>
+                            ))}
+                            <div
+                              onClick={() => phaseInputRefs.current[phase]?.click()}
+                              onDragOver={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: true })); }}
+                              onDragLeave={() => setPhaseDragOver((p) => ({ ...p, [phase]: false }))}
+                              onDrop={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: false })); if (e.dataTransfer.files) handlePhaseFiles(phase, e.dataTransfer.files); }}
+                              style={{
+                                aspectRatio: "1", borderRadius: 4, cursor: "pointer",
+                                background: dragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                                border: `1px dashed ${dragOver ? C.primaryContainer : C.outlineVar}`,
+                                display: "flex", flexDirection: "column", alignItems: "center",
+                                justifyContent: "center", gap: 3, transition: "border-color 0.15s, background 0.15s",
+                              }}
+                            >
+                              <Icon name="add" size={18} style={{ color: C.outline }} />
+                              <span style={{ color: C.outline, fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Add</span>
+                            </div>
+                          </div>
+                          <p style={{ color: C.onSurfaceVar, fontSize: 10, marginTop: 6 }}>
+                            {files.length} image{files.length !== 1 ? "s" : ""}
+                          </p>
+                        </>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -817,66 +911,101 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   <label style={{ ...labelStyle, marginBottom: 10 }}>
                     Project Gallery
                   </label>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 6,
-                    }}
-                  >
-                    {[1, 2, 3].map((i) => (
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style={{ display: "none" }}
+                    onChange={(e) => { if (e.target.files) handleGalleryFiles(e.target.files); e.target.value = ""; }}
+                  />
+
+                  {/* Drop zone — shown when empty or always as "add more" */}
+                  {galleryFiles.length === 0 ? (
+                    <div
+                      onClick={() => galleryInputRef.current?.click()}
+                      onDragOver={(e) => { e.preventDefault(); setGalleryDragOver(true); }}
+                      onDragLeave={() => setGalleryDragOver(false)}
+                      onDrop={(e) => { e.preventDefault(); setGalleryDragOver(false); if (e.dataTransfer.files) handleGalleryFiles(e.dataTransfer.files); }}
+                      style={{
+                        borderRadius: 6,
+                        border: `1px dashed ${galleryDragOver ? C.primaryContainer : C.outlineVar}`,
+                        background: galleryDragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                        padding: "24px 0",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 6,
+                        cursor: "pointer",
+                        transition: "border-color 0.15s, background 0.15s",
+                      }}
+                    >
+                      <Icon name="add_photo_alternate" size={24} style={{ color: C.outline }} />
+                      <span style={{ color: C.outline, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        {galleryDragOver ? "Drop images" : "Drag & drop or click"}
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                      {galleryFiles.map(({ preview }, i) => (
+                        <div
+                          key={preview}
+                          style={{ position: "relative", aspectRatio: "1", borderRadius: 4, overflow: "hidden" }}
+                        >
+                          <img src={preview} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryItem(i)}
+                            style={{
+                              position: "absolute",
+                              top: 4,
+                              right: 4,
+                              background: "rgba(0,0,0,0.6)",
+                              border: "none",
+                              borderRadius: "50%",
+                              width: 22,
+                              height: 22,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              padding: 0,
+                            }}
+                          >
+                            <Icon name="close" size={14} style={{ color: "#fff" }} />
+                          </button>
+                        </div>
+                      ))}
+                      {/* Always-visible add more tile */}
                       <div
-                        key={i}
+                        onClick={() => galleryInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); setGalleryDragOver(true); }}
+                        onDragLeave={() => setGalleryDragOver(false)}
+                        onDrop={(e) => { e.preventDefault(); setGalleryDragOver(false); if (e.dataTransfer.files) handleGalleryFiles(e.dataTransfer.files); }}
                         style={{
                           aspectRatio: "1",
                           borderRadius: 4,
-                          background: C.surfaceLow,
-                          border: `1px solid ${C.outlineVar}`,
+                          background: galleryDragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                          border: `1px dashed ${galleryDragOver ? C.primaryContainer : C.outlineVar}`,
                           display: "flex",
+                          flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
+                          gap: 4,
                           cursor: "pointer",
-                          transition: "background 0.15s",
+                          transition: "border-color 0.15s, background 0.15s",
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background =
-                            "rgba(255,255,255,0.06)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.background = C.surfaceLow)
-                        }
                       >
-                        <Icon
-                          name="add_photo_alternate"
-                          size={20}
-                          style={{ color: C.outline }}
-                        />
+                        <Icon name="add" size={20} style={{ color: C.outline }} />
+                        <span style={{ color: C.outline, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Add more</span>
                       </div>
-                    ))}
-                    <div
-                      style={{
-                        aspectRatio: "1",
-                        borderRadius: 4,
-                        background: C.surfaceLow,
-                        border: `1px solid ${C.outlineVar}`,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: C.outline,
-                          fontSize: 10,
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        + More
-                      </span>
                     </div>
-                  </div>
+                  )}
+                  {galleryFiles.length > 0 && (
+                    <p style={{ color: C.onSurfaceVar, fontSize: 11, marginTop: 6 }}>
+                      {galleryFiles.length} image{galleryFiles.length !== 1 ? "s" : ""} selected
+                    </p>
+                  )}
                 </div>
               </div>
 
