@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import Sidebar from "../components/Sidebar";
 import MilestoneItem from "../components/MilestoneItem";
 import Icon from "../components/Icon";
 import { colors as C } from "../theme";
+import { useFirebase } from "../contexts/FirebaseContext";
 import type { Milestone, PhaseItem } from "../types";
 
 const PHASES: PhaseItem[] = [
@@ -48,7 +50,11 @@ const FIELD_INPUTS: {
   },
 ];
 
-const PROJECT_TYPES = ["Renovations", "New constructions", "Huge scale"] as const;
+const PROJECT_TYPES = [
+  "Renovations",
+  "New constructions",
+  "Huge scale",
+] as const;
 type ProjectType = (typeof PROJECT_TYPES)[number];
 
 const SUB_OPTIONS: Record<ProjectType, string[]> = {
@@ -64,6 +70,7 @@ interface DashboardPageProps {
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
+  const { app } = useFirebase();
   const [projectType, setProjectType] = useState<ProjectType | "">("");
   const [projectSubtype, setProjectSubtype] = useState("");
   const [title, setTitle] = useState("");
@@ -78,9 +85,75 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [newStep, setNewStep] = useState("");
   const [published, setPublished] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const setField = (key: keyof typeof fieldValues, value: string) =>
     setFieldValues((prev) => ({ ...prev, [key]: value }));
+
+  const reqErr = (val: string) =>
+    submitted && !val.trim() ? (
+      <p style={{ color: "#f28b82", fontSize: 11, margin: "4px 0 0" }}>
+        Required!
+      </p>
+    ) : null;
+
+  const isValid = () =>
+    !!projectType &&
+    !!projectSubtype &&
+    !!title.trim() &&
+    !!description.trim() &&
+    !!projectOverview.trim() &&
+    !!fieldValues.rooms.trim() &&
+    !!fieldValues.squareMeters.trim() &&
+    !!fieldValues.scheduledCompletion.trim() &&
+    !!fieldValues.location.trim();
+
+  const handleSave = async (publish: boolean) => {
+    setSubmitted(true);
+    if (!isValid()) return;
+    setSaving(true);
+    try {
+      const projectId = crypto.randomUUID();
+      const db = getFirestore(app);
+      await setDoc(doc(db, "projects", projectId), {
+        id: projectId,
+        projectType,
+        projectSubtype,
+        title,
+        description,
+        projectOverview,
+        rooms: fieldValues.rooms,
+        squareMeters: fieldValues.squareMeters,
+        scheduledCompletion: fieldValues.scheduledCompletion,
+        location: fieldValues.location,
+        milestones: milestones.map((m) => m.text),
+        published: publish,
+        createdAt: new Date().toISOString(),
+      });
+      if (publish) {
+        setPublished(true);
+        setTimeout(() => {
+          setPublished(false);
+          setSubmitted(false);
+          setProjectType("");
+          setProjectSubtype("");
+          setTitle("");
+          setDescription("");
+          setProjectOverview("");
+          setFieldValues({
+            rooms: "",
+            squareMeters: "",
+            scheduledCompletion: "",
+            location: "",
+          });
+          setMilestones([]);
+        }, 1500);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const addStep = () => {
     const trimmed = newStep.trim();
@@ -252,14 +325,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           setProjectType(e.target.value as ProjectType);
                           setProjectSubtype("");
                         }}
-                        onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
-                        onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                        onFocus={(e) =>
+                          (e.target.style.borderColor = C.primaryContainer)
+                        }
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = C.outlineVar)
+                        }
                       >
-                        <option value="" disabled>Select a project type...</option>
+                        <option value="" disabled>
+                          Select a project type...
+                        </option>
                         {PROJECT_TYPES.map((t) => (
-                          <option key={t} value={t}>{t}</option>
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
                         ))}
                       </select>
+                      {reqErr(projectType)}
                     </div>
 
                     {projectType && (
@@ -269,14 +351,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           style={selectStyle}
                           value={projectSubtype}
                           onChange={(e) => setProjectSubtype(e.target.value)}
-                          onFocus={(e) => (e.target.style.borderColor = C.primaryContainer)}
-                          onBlur={(e) => (e.target.style.borderColor = C.outlineVar)}
+                          onFocus={(e) =>
+                            (e.target.style.borderColor = C.primaryContainer)
+                          }
+                          onBlur={(e) =>
+                            (e.target.style.borderColor = C.outlineVar)
+                          }
                         >
-                          <option value="" disabled>Select a subtype...</option>
+                          <option value="" disabled>
+                            Select a subtype...
+                          </option>
                           {SUB_OPTIONS[projectType].map((s) => (
-                            <option key={s} value={s}>{s}</option>
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
                           ))}
                         </select>
+                        {reqErr(projectSubtype)}
                       </div>
                     )}
 
@@ -294,6 +385,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           (e.target.style.borderColor = C.outlineVar)
                         }
                       />
+                      {reqErr(title)}
                     </div>
                     <div>
                       <label style={labelStyle}>Detailed Description</label>
@@ -310,6 +402,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           (e.target.style.borderColor = C.outlineVar)
                         }
                       />
+                      {reqErr(description)}
                     </div>
 
                     {/* 2x2 grid of fields */}
@@ -354,6 +447,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                                 }
                               />
                             </div>
+                            {reqErr(fieldValues[stateKey])}
                           </div>
                         ),
                       )}
@@ -398,6 +492,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           (e.target.style.borderColor = C.outlineVar)
                         }
                       />
+                      {reqErr(projectOverview)}
                     </div>
 
                     {/* Milestones */}
@@ -570,7 +665,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     marginBottom: 16,
                   }}
                 >
-                  Master Assets
+                  Main picture
                 </div>
 
                 {/* Cover image */}
@@ -768,7 +863,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               >
                 <button
                   type="button"
-                  onClick={() => setPublished(true)}
+                  onClick={() => handleSave(true)}
+                  disabled={saving}
                   style={{
                     width: "100%",
                     background: published
@@ -805,6 +901,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
                 <button
                   type="button"
+                  onClick={() => handleSave(false)}
+                  disabled={saving}
                   style={{
                     width: "100%",
                     background: "transparent",
@@ -814,7 +912,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     fontSize: 13,
                     fontWeight: 600,
                     color: C.onSurface,
-                    cursor: "pointer",
+                    cursor: saving ? "wait" : "pointer",
                     transition: "background 0.15s",
                     fontFamily: "Inter, sans-serif",
                   }}
