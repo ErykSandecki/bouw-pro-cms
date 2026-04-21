@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import Sidebar from "../components/Sidebar";
 import MilestoneItem from "../components/MilestoneItem";
@@ -84,12 +84,22 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   });
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [newStep, setNewStep] = useState("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverDragOver, setCoverDragOver] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const setField = (key: keyof typeof fieldValues, value: string) =>
     setFieldValues((prev) => ({ ...prev, [key]: value }));
+
+  const handleCoverFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    setCoverImage(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
 
   const reqErr = (val: string) =>
     submitted && !val.trim() ? (
@@ -148,6 +158,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             location: "",
           });
           setMilestones([]);
+          setCoverImage(null);
+          setCoverPreview(null);
         }, 1500);
       }
     } finally {
@@ -673,41 +685,82 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   <label style={{ ...labelStyle, marginBottom: 10 }}>
                     Main Cover Image
                   </label>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleCoverFile(file);
+                    }}
+                  />
                   <div
+                    onClick={() => coverInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setCoverDragOver(true); }}
+                    onDragLeave={() => setCoverDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setCoverDragOver(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleCoverFile(file);
+                    }}
                     style={{
                       borderRadius: 6,
                       overflow: "hidden",
-                      border: `1px solid ${C.outlineVar}`,
+                      border: `1px solid ${coverDragOver ? C.primaryContainer : C.outlineVar}`,
                       aspectRatio: "16/9",
-                      background: C.surfaceLow,
+                      background: coverDragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       cursor: "pointer",
-                      transition: "background 0.15s",
+                      transition: "border-color 0.15s, background 0.15s",
+                      position: "relative",
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background =
-                        "rgba(255,255,255,0.04)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = C.surfaceLow)
-                    }
                   >
-                    <div style={{ textAlign: "center", color: C.outline }}>
-                      <Icon name="add_photo_alternate" size={28} />
-                      <div
-                        style={{
-                          fontSize: 10,
-                          marginTop: 6,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        Upload Cover
+                    {coverPreview ? (
+                      <>
+                        <img
+                          src={coverPreview}
+                          alt="Cover preview"
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "rgba(0,0,0,0.45)",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: 0,
+                            transition: "opacity 0.2s",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                        >
+                          <Icon name="swap_horiz" size={24} style={{ color: "#fff" }} />
+                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 6 }}>
+                            Replace Image
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: "center", color: C.outline, pointerEvents: "none" }}>
+                        <Icon name="add_photo_alternate" size={28} />
+                        <div style={{ fontSize: 10, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                          {coverDragOver ? "Drop to upload" : "Drag & drop or click"}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
+                  {coverImage && (
+                    <p style={{ color: C.onSurfaceVar, fontSize: 11, marginTop: 6 }}>
+                      {coverImage.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Gallery */}
