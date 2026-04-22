@@ -229,7 +229,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         rooms: fieldValues.rooms,
         squareMeters: fieldValues.squareMeters,
         scheduledCompletion: fieldValues.scheduledCompletion,
-        location: fieldValues.location,
+        location: { en: "", "en-US": "", "en-GB": "", nl: fieldValues.location },
         milestones: milestones.map((m) => ({ en: "", "en-US": "", "en-GB": "", nl: m.text })),
         mainPicture,
         gallery,
