@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, collection, getDocs, orderBy, query } from "firebase/firestore";
+import { getFirestore, collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore";
 import Sidebar from "../components/Sidebar";
 import Icon from "../components/Icon";
 import { colors as C } from "../theme";
@@ -17,6 +17,7 @@ interface Project {
   createdAt: string;
   scheduledCompletion?: string;
   mainPicture?: string;
+  favourite?: boolean;
 }
 
 interface ProjectListPageProps {
@@ -66,6 +67,7 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
   const [typeFilter, setTypeFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [hoveredStar, setHoveredStar] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -80,6 +82,16 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
     };
     fetchProjects();
   }, [app]);
+
+  const toggleFavourite = async (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    const db = getFirestore(app);
+    const next = !project.favourite;
+    await updateDoc(doc(db, "projects", project.id), { favourite: next });
+    setProjects((prev) =>
+      prev.map((p) => (p.id === project.id ? { ...p, favourite: next } : p))
+    );
+  };
 
   const filtered = useMemo(() => {
     return projects.filter((p) => {
@@ -280,6 +292,49 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
                       {project.projectSubtype && <span>· {project.projectSubtype}</span>}
                       {project.location?.nl && <span>· {project.location.nl}</span>}
                     </div>
+                  </div>
+
+                  {/* Favourite */}
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <button
+                      onClick={(e) => toggleFavourite(e, project)}
+                      onMouseEnter={() => setHoveredStar(project.id)}
+                      onMouseLeave={() => setHoveredStar(null)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 4,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: project.favourite || hoveredStar === project.id ? "#F5C518" : C.outline,
+                        transition: "color 0.15s",
+                      }}
+                    >
+                      <Icon name={project.favourite || hoveredStar === project.id ? "star" : "star_border"} size={20} />
+                    </button>
+                    {hoveredStar === project.id && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "calc(100% + 6px)",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          background: C.onSurface,
+                          color: C.surface,
+                          fontSize: 11,
+                          fontWeight: 500,
+                          padding: "4px 8px",
+                          borderRadius: 4,
+                          whiteSpace: "nowrap",
+                          pointerEvents: "none",
+                          zIndex: 10,
+                        }}
+                      >
+                        {project.favourite ? "Remove from favourites" : "Mark as favourite"}
+                      </div>
+                    )}
                   </div>
 
                   {/* Status badge */}

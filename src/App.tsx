@@ -20,7 +20,10 @@ function App() {
         const token = await user.getIdToken();
         localStorage.setItem("bouwpro_auth_token", token);
         setAuthed(true);
-        navigate("/create-project", { replace: true });
+        const publicPaths = ["/login"];
+        if (publicPaths.includes(window.location.pathname)) {
+          navigate("/create-project", { replace: true });
+        }
       } else {
         localStorage.removeItem("bouwpro_auth_token");
         setAuthed(false);
