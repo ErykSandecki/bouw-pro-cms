@@ -64,16 +64,21 @@ const SUB_OPTIONS: Record<ProjectType, string[]> = {
   "Huge scale": ["Offices", "Public facilities"],
 };
 
-const makeTranslation = (nlValue: string) => ({
-  "en-AU": "", "de-AT": "", "nl-BE": "", "pt-BR": "", "en-BG": "", "en-CA": "",
-  "en-HR": "", "en-CY": "", "en-CZ": "", "en-DK": "", "en-EE": "", "en-FI": "",
-  fr: "", de: "", "en-GI": "", "en-GR": "", "en-HK": "", "en-HU": "",
-  "en-IN": "", "en-IE": "", it: "", ja: "", "en-LV": "", "de-LI": "",
-  "en-LT": "", "fr-LU": "", "en-MY": "", "en-MT": "", "es-MX": "", nl: nlValue,
-  "en-NZ": "", "en-NO": "", "en-PL": "", pt: "", "en-RO": "", "en-SG": "",
-  "en-SK": "", "en-SI": "", es: "", "sv-SE": "", "de-CH": "", th: "",
-  "en-AE": "", "en-GB": "", en: "",
-});
+const GOOGLE_TRANSLATE_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_KEY as string;
+
+const LOCALE_TO_LANG: Record<string, string> = {
+  "en-AU": "en", "de-AT": "de", "nl-BE": "nl", "pt-BR": "pt",
+  "en-BG": "en", "en-CA": "en", "en-HR": "en", "en-CY": "en",
+  "en-CZ": "en", "en-DK": "en", "en-EE": "en", "en-FI": "en",
+  fr: "fr", de: "de", "en-GI": "en", "en-GR": "en",
+  "en-HK": "en", "en-HU": "en", "en-IN": "en", "en-IE": "en",
+  it: "it", ja: "ja", "en-LV": "en", "de-LI": "de",
+  "en-LT": "en", "fr-LU": "fr", "en-MY": "en", "en-MT": "en",
+  "es-MX": "es", nl: "nl", "en-NZ": "en", "en-NO": "en",
+  "en-PL": "en", pt: "pt", "en-RO": "en", "en-SG": "en",
+  "en-SK": "en", "en-SI": "en", es: "es", "sv-SE": "sv",
+  "de-CH": "de", th: "th", "en-AE": "en", "en-GB": "en", en: "en",
+};
 
 let nextId = 3;
 
@@ -228,20 +233,48 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         }
       }
 
-      // 4. Save to Firestore
+      // 4. Translate content
+      const milestoneTexts = milestones.map((m) => m.text);
+      const sourceTexts = [title, description, projectOverview, fieldValues.location, ...milestoneTexts];
+      const byLang: Record<string, string[]> = { nl: sourceTexts };
+      if (GOOGLE_TRANSLATE_KEY) {
+        setUploadStatus("Translating content…");
+        const uniqueLangs = [...new Set(Object.values(LOCALE_TO_LANG))].filter((l) => l !== "nl");
+        for (const lang of uniqueLangs) {
+          try {
+            const res = await fetch(
+              `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_TRANSLATE_KEY}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ q: sourceTexts, source: "nl", target: lang, format: "text" }),
+              }
+            );
+            const data = await res.json();
+            byLang[lang] = data.translations.map((t: { translatedText: string }) => t.translatedText);
+          } catch {
+            byLang[lang] = sourceTexts.map(() => "");
+          }
+        }
+      }
+      const locales = Object.keys(LOCALE_TO_LANG);
+      const makeT = (idx: number) =>
+        Object.fromEntries(locales.map((l) => [l, byLang[LOCALE_TO_LANG[l]]?.[idx] ?? ""]));
+
+      // 5. Save to Firestore
       setUploadStatus("Saving project…");
       await setDoc(doc(db, "projects", projectId), {
         id: projectId,
         projectType,
         projectSubtype,
-        title: makeTranslation(title),
-        description: makeTranslation(description),
-        projectOverview: makeTranslation(projectOverview),
+        title: makeT(0),
+        description: makeT(1),
+        projectOverview: makeT(2),
         rooms: fieldValues.rooms,
         squareMeters: fieldValues.squareMeters,
         scheduledCompletion: fieldValues.scheduledCompletion,
-        location: makeTranslation(fieldValues.location),
-        milestones: milestones.map((m) => makeTranslation(m.text)),
+        location: makeT(3),
+        milestones: milestoneTexts.map((_, i) => makeT(4 + i)),
         mainPicture,
         gallery,
         phases,
