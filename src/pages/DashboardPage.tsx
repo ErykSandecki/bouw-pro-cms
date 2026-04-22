@@ -251,7 +251,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               }
             );
             const data = await res.json();
-            byLang[lang] = data.translations.map((t: { translatedText: string }) => t.translatedText);
+            byLang[lang] = data.data.translations.map((t: { translatedText: string }) => t.translatedText);
           } catch {
             byLang[lang] = sourceTexts.map(() => "");
           }
