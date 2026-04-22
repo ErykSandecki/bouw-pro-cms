@@ -68,16 +68,17 @@ const GOOGLE_TRANSLATE_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_KEY as string
 
 const LOCALE_TO_LANG: Record<string, string> = {
   "en-AU": "en", "de-AT": "de", "nl-BE": "nl", "pt-BR": "pt",
-  "en-BG": "en", "en-CA": "en", "en-HR": "en", "en-CY": "en",
-  "en-CZ": "en", "en-DK": "en", "en-EE": "en", "en-FI": "en",
-  fr: "fr", de: "de", "en-GI": "en", "en-GR": "en",
-  "en-HK": "en", "en-HU": "en", "en-IN": "en", "en-IE": "en",
-  it: "it", ja: "ja", "en-LV": "en", "de-LI": "de",
-  "en-LT": "en", "fr-LU": "fr", "en-MY": "en", "en-MT": "en",
-  "es-MX": "es", nl: "nl", "en-NZ": "en", "en-NO": "en",
-  "en-PL": "en", pt: "pt", "en-RO": "en", "en-SG": "en",
-  "en-SK": "en", "en-SI": "en", es: "es", "sv-SE": "sv",
-  "de-CH": "de", th: "th", "en-AE": "en", "en-GB": "en", en: "en",
+  bg: "bg", "en-CA": "en", hr: "hr", el: "el",
+  cs: "cs", da: "da", et: "et", fi: "fi",
+  fr: "fr", de: "de", "en-GI": "en", "en-HK": "en",
+  hu: "hu", "en-IN": "en", "en-IE": "en", it: "it",
+  ja: "ja", lv: "lv", "de-LI": "de", lt: "lt",
+  "fr-LU": "fr", ms: "ms", mt: "mt", "es-MX": "es",
+  nl: "nl", "en-NZ": "en", nb: "no", pl: "pl",
+  pt: "pt", ro: "ro", "en-SG": "en", sk: "sk",
+  sl: "sl", es: "es", sv: "sv", "de-CH": "de",
+  th: "th", "en-AE": "en", "en-GB": "en", en: "en",
+  "en-CY": "en",
 };
 
 let nextId = 3;
