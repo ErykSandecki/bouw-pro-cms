@@ -1,11 +1,13 @@
-import { useState } from "react";
 import { getAuth, signOut } from "firebase/auth";
+import { useNavigate, useLocation } from "react-router-dom";
 import Icon from "./Icon";
 import { colors as C } from "../theme";
-import type { NavItem } from "../types";
 import { useFirebase } from "../contexts/FirebaseContext";
 
-const NAV_ITEMS: NavItem[] = [{ icon: "account_tree", label: "Add project" }];
+const NAV_ITEMS = [
+  { icon: "add_circle", label: "Add project", path: "/create-project" },
+  { icon: "list_alt", label: "Project list", path: "/projects" },
+];
 
 interface SidebarProps {
   onLogout: () => void;
@@ -13,7 +15,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
   const { app } = useFirebase();
-  const [active, setActive] = useState("Add project");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await signOut(getAuth(app));
@@ -102,12 +105,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
           gap: 2,
         }}
       >
-        {NAV_ITEMS.map(({ icon, label }) => {
-          const isActive = active === label;
+        {NAV_ITEMS.map(({ icon, label, path }) => {
+          const isActive = location.pathname === path;
           return (
             <button
               key={label}
-              onClick={() => setActive(label)}
+              onClick={() => navigate(path)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -179,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
             (e.currentTarget.style.background = "transparent")
           }
         >
-          <Icon name={"logout"} size={18} />
+          <Icon name="logout" size={18} />
           Logout
         </button>
       </div>

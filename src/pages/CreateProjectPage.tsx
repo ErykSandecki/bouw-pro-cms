@@ -7,6 +7,7 @@ import Icon from "../components/Icon";
 import { colors as C } from "../theme";
 import { useFirebase } from "../contexts/FirebaseContext";
 import type { Milestone, PhaseItem } from "../types";
+import { LOCALE_TO_LANG, PROJECT_TYPES, SUB_OPTIONS, type ProjectType } from "../constants";
 
 const PHASES: PhaseItem[] = [
   { icon: "engineering", label: "Preparation", num: 1 },
@@ -51,35 +52,9 @@ const FIELD_INPUTS: {
   },
 ];
 
-const PROJECT_TYPES = [
-  "Renovations",
-  "New constructions",
-  "Huge scale",
-] as const;
-type ProjectType = (typeof PROJECT_TYPES)[number];
 
-const SUB_OPTIONS: Record<ProjectType, string[]> = {
-  Renovations: ["Bathrooms", "Homes", "Annexes", "Luxury finishes"],
-  "New constructions": ["Newly built homes", "Luxury finishes", "Annexes"],
-  "Huge scale": ["Offices", "Public facilities"],
-};
-
-const GOOGLE_TRANSLATE_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_KEY as string;
-
-const LOCALE_TO_LANG: Record<string, string> = {
-  "en-AU": "en", "de-AT": "de", "nl-BE": "nl", "pt-BR": "pt",
-  bg: "bg", "en-CA": "en", hr: "hr", el: "el",
-  cs: "cs", da: "da", et: "et", fi: "fi",
-  fr: "fr", de: "de", "en-GI": "en", "en-HK": "en",
-  hu: "hu", "en-IN": "en", "en-IE": "en", it: "it",
-  ja: "ja", lv: "lv", "de-LI": "de", lt: "lt",
-  "fr-LU": "fr", ms: "ms", mt: "mt", "es-MX": "es",
-  nl: "nl", "en-NZ": "en", nb: "no", pl: "pl",
-  pt: "pt", ro: "ro", "en-SG": "en", sk: "sk",
-  sl: "sl", es: "es", sv: "sv", "de-CH": "de",
-  th: "th", "en-AE": "en", "en-GB": "en", en: "en",
-  "en-CY": "en",
-};
+const GOOGLE_TRANSLATE_KEY = import.meta.env
+  .VITE_GOOGLE_TRANSLATE_KEY as string;
 
 let nextId = 3;
 
@@ -87,7 +62,7 @@ interface DashboardPageProps {
   onLogout: () => void;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
+const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const { app } = useFirebase();
   const [projectType, setProjectType] = useState<ProjectType | "">("");
   const [projectSubtype, setProjectSubtype] = useState("");
@@ -106,20 +81,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverDragOver, setCoverDragOver] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const [galleryFiles, setGalleryFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<
+    { file: File; preview: string }[]
+  >([]);
   const [galleryDragOver, setGalleryDragOver] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   type PhaseKey = "Preparation" | "Build Phase" | "Finishing";
-  const [phaseFiles, setPhaseFiles] = useState<Record<PhaseKey, { file: File; preview: string }[]>>({
+  const [phaseFiles, setPhaseFiles] = useState<
+    Record<PhaseKey, { file: File; preview: string }[]>
+  >({
     Preparation: [],
     "Build Phase": [],
     Finishing: [],
   });
-  const [phaseDragOver, setPhaseDragOver] = useState<Record<PhaseKey, boolean>>({
-    Preparation: false,
-    "Build Phase": false,
-    Finishing: false,
-  });
+  const [phaseDragOver, setPhaseDragOver] = useState<Record<PhaseKey, boolean>>(
+    {
+      Preparation: false,
+      "Build Phase": false,
+      Finishing: false,
+    },
+  );
   const phaseInputRefs = useRef<Record<PhaseKey, HTMLInputElement | null>>({
     Preparation: null,
     "Build Phase": null,
@@ -158,7 +139,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
     setPhaseFiles((prev) => ({
       ...prev,
-      [phase]: [...prev[phase], ...images.map((file) => ({ file, preview: URL.createObjectURL(file) }))],
+      [phase]: [
+        ...prev[phase],
+        ...images.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+      ],
     }));
   };
 
@@ -189,8 +173,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     !!coverImage &&
     galleryFiles.length > 0;
 
-  const uploadFile = async (storage: ReturnType<typeof getStorage>, path: string, file: File) => {
-    const url = await getDownloadURL(await uploadBytes(ref(storage, path), file).then((s) => s.ref));
+  const uploadFile = async (
+    storage: ReturnType<typeof getStorage>,
+    path: string,
+    file: File,
+  ) => {
+    const url = await getDownloadURL(
+      await uploadBytes(ref(storage, path), file).then((s) => s.ref),
+    );
     return url;
   };
 
@@ -208,7 +198,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       let mainPicture = "";
       if (coverImage) {
         setUploadStatus("Uploading main picture…");
-        mainPicture = await uploadFile(storage, `${base}/cover/${coverImage.name}`, coverImage);
+        mainPicture = await uploadFile(
+          storage,
+          `${base}/cover/${coverImage.name}`,
+          coverImage,
+        );
       }
 
       // 2. Gallery
@@ -216,21 +210,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       if (galleryFiles.length > 0) {
         setUploadStatus(`Uploading gallery (0 / ${galleryFiles.length})…`);
         for (let i = 0; i < galleryFiles.length; i++) {
-          setUploadStatus(`Uploading gallery (${i + 1} / ${galleryFiles.length})…`);
-          const url = await uploadFile(storage, `${base}/gallery/${galleryFiles[i].file.name}`, galleryFiles[i].file);
+          setUploadStatus(
+            `Uploading gallery (${i + 1} / ${galleryFiles.length})…`,
+          );
+          const url = await uploadFile(
+            storage,
+            `${base}/gallery/${galleryFiles[i].file.name}`,
+            galleryFiles[i].file,
+          );
           gallery.push(url);
         }
       }
 
       // 3. Phase pictures
-      const phases: Record<PhaseKey, string[]> = { Preparation: [], "Build Phase": [], Finishing: [] };
-      for (const phase of (["Preparation", "Build Phase", "Finishing"] as PhaseKey[])) {
+      const phases: Record<PhaseKey, string[]> = {
+        Preparation: [],
+        "Build Phase": [],
+        Finishing: [],
+      };
+      for (const phase of [
+        "Preparation",
+        "Build Phase",
+        "Finishing",
+      ] as PhaseKey[]) {
         const files = phaseFiles[phase];
         if (files.length > 0) {
           setUploadStatus(`Uploading ${phase} phase (0 / ${files.length})…`);
           for (let i = 0; i < files.length; i++) {
-            setUploadStatus(`Uploading ${phase} phase (${i + 1} / ${files.length})…`);
-            const url = await uploadFile(storage, `${base}/phases/${phase}/${files[i].file.name}`, files[i].file);
+            setUploadStatus(
+              `Uploading ${phase} phase (${i + 1} / ${files.length})…`,
+            );
+            const url = await uploadFile(
+              storage,
+              `${base}/phases/${phase}/${files[i].file.name}`,
+              files[i].file,
+            );
             phases[phase].push(url);
           }
         }
@@ -238,11 +252,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
       // 4. Translate content
       const milestoneTexts = milestones.map((m) => m.text);
-      const sourceTexts = [title, description, projectOverview, fieldValues.location, ...milestoneTexts];
+      const sourceTexts = [
+        title,
+        description,
+        projectOverview,
+        fieldValues.location,
+        ...milestoneTexts,
+      ];
       const byLang: Record<string, string[]> = { nl: sourceTexts };
       if (GOOGLE_TRANSLATE_KEY) {
         setUploadStatus("Translating content…");
-        const uniqueLangs = [...new Set(Object.values(LOCALE_TO_LANG))].filter((l) => l !== "nl");
+        const uniqueLangs = [...new Set(Object.values(LOCALE_TO_LANG))].filter(
+          (l) => l !== "nl",
+        );
         for (const lang of uniqueLangs) {
           try {
             const res = await fetch(
@@ -250,11 +272,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ q: sourceTexts, source: "nl", target: lang, format: "text" }),
-              }
+                body: JSON.stringify({
+                  q: sourceTexts,
+                  source: "nl",
+                  target: lang,
+                  format: "text",
+                }),
+              },
             );
             const data = await res.json();
-            byLang[lang] = data.data.translations.map((t: { translatedText: string }) => t.translatedText);
+            byLang[lang] = data.data.translations.map(
+              (t: { translatedText: string }) => t.translatedText,
+            );
           } catch {
             byLang[lang] = sourceTexts.map(() => "");
           }
@@ -262,7 +291,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       }
       const locales = Object.keys(LOCALE_TO_LANG);
       const makeT = (idx: number) =>
-        Object.fromEntries(locales.map((l) => [l, byLang[LOCALE_TO_LANG[l]]?.[idx] ?? ""]));
+        Object.fromEntries(
+          locales.map((l) => [l, byLang[LOCALE_TO_LANG[l]]?.[idx] ?? ""]),
+        );
 
       // 5. Save to Firestore
       setUploadStatus("Saving project…");
@@ -295,7 +326,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           setTitle("");
           setDescription("");
           setProjectOverview("");
-          setFieldValues({ rooms: "", squareMeters: "", scheduledCompletion: "", location: "Nederland" });
+          setFieldValues({
+            rooms: "",
+            squareMeters: "",
+            scheduledCompletion: "",
+            location: "Nederland",
+          });
           setMilestones([]);
           setCoverImage(null);
           setCoverPreview(null);
@@ -819,20 +855,38 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                         accept="image/*"
                         multiple
                         style={{ display: "none" }}
-                        ref={(el) => { phaseInputRefs.current[phase] = el; }}
-                        onChange={(e) => { if (e.target.files) handlePhaseFiles(phase, e.target.files); e.target.value = ""; }}
+                        ref={(el) => {
+                          phaseInputRefs.current[phase] = el;
+                        }}
+                        onChange={(e) => {
+                          if (e.target.files)
+                            handlePhaseFiles(phase, e.target.files);
+                          e.target.value = "";
+                        }}
                       />
 
                       {files.length === 0 ? (
                         <div
                           onClick={() => phaseInputRefs.current[phase]?.click()}
-                          onDragOver={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: true })); }}
-                          onDragLeave={() => setPhaseDragOver((p) => ({ ...p, [phase]: false }))}
-                          onDrop={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: false })); if (e.dataTransfer.files) handlePhaseFiles(phase, e.dataTransfer.files); }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setPhaseDragOver((p) => ({ ...p, [phase]: true }));
+                          }}
+                          onDragLeave={() =>
+                            setPhaseDragOver((p) => ({ ...p, [phase]: false }))
+                          }
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setPhaseDragOver((p) => ({ ...p, [phase]: false }));
+                            if (e.dataTransfer.files)
+                              handlePhaseFiles(phase, e.dataTransfer.files);
+                          }}
                           style={{
                             borderRadius: 8,
                             border: `2px dashed ${dragOver ? C.primaryContainer : C.outlineVar}`,
-                            background: dragOver ? "rgba(255,255,255,0.04)" : "transparent",
+                            background: dragOver
+                              ? "rgba(255,255,255,0.04)"
+                              : "transparent",
                             padding: "20px 0",
                             display: "flex",
                             flexDirection: "column",
@@ -842,49 +896,146 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                             transition: "border-color 0.15s, background 0.15s",
                           }}
                         >
-                          <Icon name="upload_file" size={24} style={{ color: C.outline }} />
-                          <span style={{ color: C.outline, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                          <Icon
+                            name="upload_file"
+                            size={24}
+                            style={{ color: C.outline }}
+                          />
+                          <span
+                            style={{
+                              color: C.outline,
+                              fontSize: 9,
+                              fontWeight: 700,
+                              letterSpacing: "0.1em",
+                              textTransform: "uppercase",
+                            }}
+                          >
                             {dragOver ? "Drop images" : "Drag & drop or click"}
                           </span>
                         </div>
                       ) : (
                         <>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: 5,
+                            }}
+                          >
                             {files.map(({ preview }, i) => (
-                              <div key={preview} style={{ position: "relative", aspectRatio: "1", borderRadius: 4, overflow: "hidden" }}>
-                                <img src={preview} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                              <div
+                                key={preview}
+                                style={{
+                                  position: "relative",
+                                  aspectRatio: "1",
+                                  borderRadius: 4,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <img
+                                  src={preview}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    display: "block",
+                                  }}
+                                />
                                 <button
                                   type="button"
                                   onClick={() => removePhaseItem(phase, i)}
                                   style={{
-                                    position: "absolute", top: 3, right: 3,
-                                    background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%",
-                                    width: 20, height: 20, display: "flex", alignItems: "center",
-                                    justifyContent: "center", cursor: "pointer", padding: 0,
+                                    position: "absolute",
+                                    top: 3,
+                                    right: 3,
+                                    background: "rgba(0,0,0,0.6)",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: 20,
+                                    height: 20,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    padding: 0,
                                   }}
                                 >
-                                  <Icon name="close" size={12} style={{ color: "#fff" }} />
+                                  <Icon
+                                    name="close"
+                                    size={12}
+                                    style={{ color: "#fff" }}
+                                  />
                                 </button>
                               </div>
                             ))}
                             <div
-                              onClick={() => phaseInputRefs.current[phase]?.click()}
-                              onDragOver={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: true })); }}
-                              onDragLeave={() => setPhaseDragOver((p) => ({ ...p, [phase]: false }))}
-                              onDrop={(e) => { e.preventDefault(); setPhaseDragOver((p) => ({ ...p, [phase]: false })); if (e.dataTransfer.files) handlePhaseFiles(phase, e.dataTransfer.files); }}
+                              onClick={() =>
+                                phaseInputRefs.current[phase]?.click()
+                              }
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                setPhaseDragOver((p) => ({
+                                  ...p,
+                                  [phase]: true,
+                                }));
+                              }}
+                              onDragLeave={() =>
+                                setPhaseDragOver((p) => ({
+                                  ...p,
+                                  [phase]: false,
+                                }))
+                              }
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setPhaseDragOver((p) => ({
+                                  ...p,
+                                  [phase]: false,
+                                }));
+                                if (e.dataTransfer.files)
+                                  handlePhaseFiles(phase, e.dataTransfer.files);
+                              }}
                               style={{
-                                aspectRatio: "1", borderRadius: 4, cursor: "pointer",
-                                background: dragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                                aspectRatio: "1",
+                                borderRadius: 4,
+                                cursor: "pointer",
+                                background: dragOver
+                                  ? "rgba(255,255,255,0.06)"
+                                  : C.surfaceLow,
                                 border: `1px dashed ${dragOver ? C.primaryContainer : C.outlineVar}`,
-                                display: "flex", flexDirection: "column", alignItems: "center",
-                                justifyContent: "center", gap: 3, transition: "border-color 0.15s, background 0.15s",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 3,
+                                transition:
+                                  "border-color 0.15s, background 0.15s",
                               }}
                             >
-                              <Icon name="add" size={18} style={{ color: C.outline }} />
-                              <span style={{ color: C.outline, fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Add</span>
+                              <Icon
+                                name="add"
+                                size={18}
+                                style={{ color: C.outline }}
+                              />
+                              <span
+                                style={{
+                                  color: C.outline,
+                                  fontSize: 8,
+                                  fontWeight: 700,
+                                  letterSpacing: "0.08em",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                Add
+                              </span>
                             </div>
                           </div>
-                          <p style={{ color: C.onSurfaceVar, fontSize: 10, marginTop: 6 }}>
+                          <p
+                            style={{
+                              color: C.onSurfaceVar,
+                              fontSize: 10,
+                              marginTop: 6,
+                            }}
+                          >
                             {files.length} image{files.length !== 1 ? "s" : ""}
                           </p>
                         </>
@@ -1050,7 +1201,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     </p>
                   )}
                   {submitted && !coverImage && (
-                    <p style={{ color: "#f28b82", fontSize: 11, margin: "4px 0 0" }}>Required!</p>
+                    <p
+                      style={{
+                        color: "#f28b82",
+                        fontSize: 11,
+                        margin: "4px 0 0",
+                      }}
+                    >
+                      Required!
+                    </p>
                   )}
                 </div>
 
@@ -1065,20 +1224,33 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     accept="image/*"
                     multiple
                     style={{ display: "none" }}
-                    onChange={(e) => { if (e.target.files) handleGalleryFiles(e.target.files); e.target.value = ""; }}
+                    onChange={(e) => {
+                      if (e.target.files) handleGalleryFiles(e.target.files);
+                      e.target.value = "";
+                    }}
                   />
 
                   {/* Drop zone — shown when empty or always as "add more" */}
                   {galleryFiles.length === 0 ? (
                     <div
                       onClick={() => galleryInputRef.current?.click()}
-                      onDragOver={(e) => { e.preventDefault(); setGalleryDragOver(true); }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setGalleryDragOver(true);
+                      }}
                       onDragLeave={() => setGalleryDragOver(false)}
-                      onDrop={(e) => { e.preventDefault(); setGalleryDragOver(false); if (e.dataTransfer.files) handleGalleryFiles(e.dataTransfer.files); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setGalleryDragOver(false);
+                        if (e.dataTransfer.files)
+                          handleGalleryFiles(e.dataTransfer.files);
+                      }}
                       style={{
                         borderRadius: 6,
                         border: `1px dashed ${galleryDragOver ? C.primaryContainer : C.outlineVar}`,
-                        background: galleryDragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                        background: galleryDragOver
+                          ? "rgba(255,255,255,0.06)"
+                          : C.surfaceLow,
                         padding: "24px 0",
                         display: "flex",
                         flexDirection: "column",
@@ -1088,19 +1260,52 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                         transition: "border-color 0.15s, background 0.15s",
                       }}
                     >
-                      <Icon name="add_photo_alternate" size={24} style={{ color: C.outline }} />
-                      <span style={{ color: C.outline, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                        {galleryDragOver ? "Drop images" : "Drag & drop or click"}
+                      <Icon
+                        name="add_photo_alternate"
+                        size={24}
+                        style={{ color: C.outline }}
+                      />
+                      <span
+                        style={{
+                          color: C.outline,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {galleryDragOver
+                          ? "Drop images"
+                          : "Drag & drop or click"}
                       </span>
                     </div>
                   ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 6,
+                      }}
+                    >
                       {galleryFiles.map(({ preview }, i) => (
                         <div
                           key={preview}
-                          style={{ position: "relative", aspectRatio: "1", borderRadius: 4, overflow: "hidden" }}
+                          style={{
+                            position: "relative",
+                            aspectRatio: "1",
+                            borderRadius: 4,
+                            overflow: "hidden",
+                          }}
                         >
-                          <img src={preview} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <img
+                            src={preview}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              display: "block",
+                            }}
+                          />
                           <button
                             type="button"
                             onClick={() => removeGalleryItem(i)}
@@ -1120,20 +1325,34 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                               padding: 0,
                             }}
                           >
-                            <Icon name="close" size={14} style={{ color: "#fff" }} />
+                            <Icon
+                              name="close"
+                              size={14}
+                              style={{ color: "#fff" }}
+                            />
                           </button>
                         </div>
                       ))}
                       {/* Always-visible add more tile */}
                       <div
                         onClick={() => galleryInputRef.current?.click()}
-                        onDragOver={(e) => { e.preventDefault(); setGalleryDragOver(true); }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setGalleryDragOver(true);
+                        }}
                         onDragLeave={() => setGalleryDragOver(false)}
-                        onDrop={(e) => { e.preventDefault(); setGalleryDragOver(false); if (e.dataTransfer.files) handleGalleryFiles(e.dataTransfer.files); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setGalleryDragOver(false);
+                          if (e.dataTransfer.files)
+                            handleGalleryFiles(e.dataTransfer.files);
+                        }}
                         style={{
                           aspectRatio: "1",
                           borderRadius: 4,
-                          background: galleryDragOver ? "rgba(255,255,255,0.06)" : C.surfaceLow,
+                          background: galleryDragOver
+                            ? "rgba(255,255,255,0.06)"
+                            : C.surfaceLow,
                           border: `1px dashed ${galleryDragOver ? C.primaryContainer : C.outlineVar}`,
                           display: "flex",
                           flexDirection: "column",
@@ -1144,18 +1363,47 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           transition: "border-color 0.15s, background 0.15s",
                         }}
                       >
-                        <Icon name="add" size={20} style={{ color: C.outline }} />
-                        <span style={{ color: C.outline, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Add more</span>
+                        <Icon
+                          name="add"
+                          size={20}
+                          style={{ color: C.outline }}
+                        />
+                        <span
+                          style={{
+                            color: C.outline,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Add more
+                        </span>
                       </div>
                     </div>
                   )}
                   {galleryFiles.length > 0 && (
-                    <p style={{ color: C.onSurfaceVar, fontSize: 11, marginTop: 6 }}>
-                      {galleryFiles.length} image{galleryFiles.length !== 1 ? "s" : ""} selected
+                    <p
+                      style={{
+                        color: C.onSurfaceVar,
+                        fontSize: 11,
+                        marginTop: 6,
+                      }}
+                    >
+                      {galleryFiles.length} image
+                      {galleryFiles.length !== 1 ? "s" : ""} selected
                     </p>
                   )}
                   {submitted && galleryFiles.length === 0 && (
-                    <p style={{ color: "#f28b82", fontSize: 11, margin: "4px 0 0" }}>Required!</p>
+                    <p
+                      style={{
+                        color: "#f28b82",
+                        fontSize: 11,
+                        margin: "4px 0 0",
+                      }}
+                    >
+                      Required!
+                    </p>
                   )}
                 </div>
               </div>
@@ -1210,4 +1458,4 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   );
 };
 
-export default DashboardPage;
+export default CreateProjectPage;
