@@ -185,7 +185,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     !!fieldValues.rooms.trim() &&
     !!fieldValues.squareMeters.trim() &&
     !!fieldValues.scheduledCompletion.trim() &&
-    !!fieldValues.location.trim();
+    !!fieldValues.location.trim() &&
+    !!coverImage &&
+    galleryFiles.length > 0;
 
   const uploadFile = async (storage: ReturnType<typeof getStorage>, path: string, file: File) => {
     const url = await getDownloadURL(await uploadBytes(ref(storage, path), file).then((s) => s.ref));
@@ -1047,6 +1049,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                       {coverImage.name}
                     </p>
                   )}
+                  {submitted && !coverImage && (
+                    <p style={{ color: "#f28b82", fontSize: 11, margin: "4px 0 0" }}>Required!</p>
+                  )}
                 </div>
 
                 {/* Gallery */}
@@ -1148,6 +1153,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     <p style={{ color: C.onSurfaceVar, fontSize: 11, marginTop: 6 }}>
                       {galleryFiles.length} image{galleryFiles.length !== 1 ? "s" : ""} selected
                     </p>
+                  )}
+                  {submitted && galleryFiles.length === 0 && (
+                    <p style={{ color: "#f28b82", fontSize: 11, margin: "4px 0 0" }}>Required!</p>
                   )}
                 </div>
               </div>
