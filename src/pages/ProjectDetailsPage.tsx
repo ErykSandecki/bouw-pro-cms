@@ -306,10 +306,31 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
               fontSize: 20,
               fontWeight: 700,
               margin: 0,
+              flex: 1,
             }}
           >
             Edit Project
           </h1>
+          <button
+            onClick={() => navigate(`/project-pictures/${id}`)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: C.surfaceHigh,
+              border: `1px solid ${C.outlineVar}`,
+              borderRadius: 8,
+              color: C.onSurfaceVar,
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "8px 16px",
+              cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+            }}
+          >
+            <Icon name="photo_library" size={16} />
+            Edit Pictures
+          </button>
         </div>
 
         <div

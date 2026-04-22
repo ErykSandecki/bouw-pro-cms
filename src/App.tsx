@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import CreateProjectPage from "./pages/CreateProjectPage";
 import ProjectListPage from "./pages/ProjectListPage";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import ProjectPicturesPage from "./pages/ProjectPicturesPage";
 
 function App() {
   const { app } = useFirebase();
@@ -75,6 +76,18 @@ function App() {
         element={
           authed ? (
             <ProjectDetailsPage
+              onLogout={() => navigate("/login", { replace: true })}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/project-pictures/:id"
+        element={
+          authed ? (
+            <ProjectPicturesPage
               onLogout={() => navigate("/login", { replace: true })}
             />
           ) : (
