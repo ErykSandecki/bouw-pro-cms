@@ -98,7 +98,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     rooms: "",
     squareMeters: "",
     scheduledCompletion: "",
-    location: "",
+    location: "Nederland",
   });
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [newStep, setNewStep] = useState("");
@@ -293,7 +293,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           setTitle("");
           setDescription("");
           setProjectOverview("");
-          setFieldValues({ rooms: "", squareMeters: "", scheduledCompletion: "", location: "" });
+          setFieldValues({ rooms: "", squareMeters: "", scheduledCompletion: "", location: "Nederland" });
           setMilestones([]);
           setCoverImage(null);
           setCoverPreview(null);
