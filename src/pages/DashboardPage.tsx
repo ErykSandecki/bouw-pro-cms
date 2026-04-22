@@ -64,6 +64,17 @@ const SUB_OPTIONS: Record<ProjectType, string[]> = {
   "Huge scale": ["Offices", "Public facilities"],
 };
 
+const makeTranslation = (nlValue: string) => ({
+  "en-AU": "", "de-AT": "", "nl-BE": "", "pt-BR": "", "en-BG": "", "en-CA": "",
+  "en-HR": "", "en-CY": "", "en-CZ": "", "en-DK": "", "en-EE": "", "en-FI": "",
+  fr: "", de: "", "en-GI": "", "en-GR": "", "en-HK": "", "en-HU": "",
+  "en-IN": "", "en-IE": "", it: "", ja: "", "en-LV": "", "de-LI": "",
+  "en-LT": "", "fr-LU": "", "en-MY": "", "en-MT": "", "es-MX": "", nl: nlValue,
+  "en-NZ": "", "en-NO": "", "en-PL": "", pt: "", "en-RO": "", "en-SG": "",
+  "en-SK": "", "en-SI": "", es: "", "sv-SE": "", "de-CH": "", th: "",
+  "en-AE": "", "en-GB": "", en: "",
+});
+
 let nextId = 3;
 
 interface DashboardPageProps {
@@ -223,14 +234,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         id: projectId,
         projectType,
         projectSubtype,
-        title: { en: "", "en-AU": "", "en-GB": "", nl: title },
-        description: { en: "", "en-AU": "", "en-GB": "", nl: description },
-        projectOverview: { en: "", "en-AU": "", "en-GB": "", nl: projectOverview },
+        title: makeTranslation(title),
+        description: makeTranslation(description),
+        projectOverview: makeTranslation(projectOverview),
         rooms: fieldValues.rooms,
         squareMeters: fieldValues.squareMeters,
         scheduledCompletion: fieldValues.scheduledCompletion,
-        location: { en: "", "en-AU": "", "en-GB": "", nl: fieldValues.location },
-        milestones: milestones.map((m) => ({ en: "", "en-AU": "", "en-GB": "", nl: m.text })),
+        location: makeTranslation(fieldValues.location),
+        milestones: milestones.map((m) => makeTranslation(m.text)),
         mainPicture,
         gallery,
         phases,
