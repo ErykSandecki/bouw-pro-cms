@@ -10,9 +10,9 @@ import type { Milestone, PhaseItem } from "../types";
 import { LOCALE_TO_LANG, PROJECT_TYPES, SUB_OPTIONS, type ProjectType } from "../constants";
 
 const PHASES: PhaseItem[] = [
-  { icon: "engineering", label: "Preparation", num: 1 },
-  { icon: "construction", label: "Build Phase", num: 2 },
-  { icon: "brush", label: "Finishing", num: 3 },
+  { icon: "engineering", label: "Preparation", key: "preparation", num: 1 },
+  { icon: "construction", label: "Build Phase", key: "buildPhase", num: 2 },
+  { icon: "brush", label: "Finishing", key: "finishing", num: 3 },
 ];
 
 const FIELD_INPUTS: {
@@ -86,25 +86,25 @@ const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   >([]);
   const [galleryDragOver, setGalleryDragOver] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  type PhaseKey = "Preparation" | "Build Phase" | "Finishing";
+  type PhaseKey = "preparation" | "buildPhase" | "finishing";
   const [phaseFiles, setPhaseFiles] = useState<
     Record<PhaseKey, { file: File; preview: string }[]>
   >({
-    Preparation: [],
-    "Build Phase": [],
-    Finishing: [],
+    preparation: [],
+    buildPhase: [],
+    finishing: [],
   });
   const [phaseDragOver, setPhaseDragOver] = useState<Record<PhaseKey, boolean>>(
     {
-      Preparation: false,
-      "Build Phase": false,
-      Finishing: false,
+      preparation: false,
+      buildPhase: false,
+      finishing: false,
     },
   );
   const phaseInputRefs = useRef<Record<PhaseKey, HTMLInputElement | null>>({
-    Preparation: null,
-    "Build Phase": null,
-    Finishing: null,
+    preparation: null,
+    buildPhase: null,
+    finishing: null,
   });
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -224,14 +224,14 @@ const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
       // 3. Phase pictures
       const phases: Record<PhaseKey, string[]> = {
-        Preparation: [],
-        "Build Phase": [],
-        Finishing: [],
+        preparation: [],
+        buildPhase: [],
+        finishing: [],
       };
       for (const phase of [
-        "Preparation",
-        "Build Phase",
-        "Finishing",
+        "preparation",
+        "buildPhase",
+        "finishing",
       ] as PhaseKey[]) {
         const files = phaseFiles[phase];
         if (files.length > 0) {
@@ -336,7 +336,7 @@ const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           setCoverImage(null);
           setCoverPreview(null);
           setGalleryFiles([]);
-          setPhaseFiles({ Preparation: [], "Build Phase": [], Finishing: [] });
+          setPhaseFiles({ preparation: [], buildPhase: [], finishing: [] });
         }, 1500);
       }
     } finally {
@@ -819,8 +819,8 @@ const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   gap: 16,
                 }}
               >
-                {PHASES.map(({ icon, label }) => {
-                  const phase = label as PhaseKey;
+                {PHASES.map(({ icon, label, key }) => {
+                  const phase = key as PhaseKey;
                   const files = phaseFiles[phase];
                   const dragOver = phaseDragOver[phase];
                   return (

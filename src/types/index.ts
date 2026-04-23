@@ -8,6 +8,7 @@ export interface NavItem {
 export interface PhaseItem {
   icon: string
   label: string
+  key: string
   num: number
 }
 

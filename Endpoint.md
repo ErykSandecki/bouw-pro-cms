@@ -22,9 +22,9 @@ Collection path: `projects/{projectId}`
   "mainPicture": "string",
   "gallery": ["string"],
   "phases": {
-    "Preparation": ["string"],
-    "Build Phase": ["string"],
-    "Finishing": ["string"]
+    "preparation": ["string"],
+    "buildPhase": ["string"],
+    "finishing": ["string"]
   },
   "published": "boolean",
   "favourite": "boolean",
@@ -51,9 +51,9 @@ Collection path: `projects/{projectId}`
 | `scheduledCompletion` | `string` | — | Target completion date — ISO 8601 (`yyyy-mm-dd`) |
 | `mainPicture` | `string` | — | Firebase Storage download URL for the cover image |
 | `gallery` | `string[]` | — | Firebase Storage download URLs for gallery images |
-| `phases.Preparation` | `string[]` | — | Storage URLs for Preparation-phase images |
-| `phases["Build Phase"]` | `string[]` | — | Storage URLs for Build-phase images |
-| `phases.Finishing` | `string[]` | — | Storage URLs for Finishing-phase images |
+| `phases.preparation` | `string[]` | — | Storage URLs for Preparation-phase images |
+| `phases.buildPhase` | `string[]` | — | Storage URLs for Build-phase images |
+| `phases.finishing` | `string[]` | — | Storage URLs for Finishing-phase images |
 | `published` | `boolean` | — | `true` = live, `false` = draft |
 | `favourite` | `boolean` | — | Optional; marks the project as featured |
 | `createdAt` | `string` | — | ISO 8601 timestamp set on creation |
@@ -130,7 +130,7 @@ Images are stored in Firebase Storage. The URLs stored in Firestore are public d
 ```
 projects/{projectId}/cover/{filename}          → mainPicture
 projects/{projectId}/gallery/{filename}        → gallery[]
-projects/{projectId}/phases/Preparation/{f}   → phases.Preparation[]
-projects/{projectId}/phases/Build Phase/{f}   → phases["Build Phase"][]
-projects/{projectId}/phases/Finishing/{f}     → phases.Finishing[]
+projects/{projectId}/phases/preparation/{f}   → phases.preparation[]
+projects/{projectId}/phases/buildPhase/{f}    → phases.buildPhase[]
+projects/{projectId}/phases/finishing/{f}     → phases.finishing[]
 ```

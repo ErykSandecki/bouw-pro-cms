@@ -7,7 +7,7 @@ import Icon from "../components/Icon";
 import { colors as C } from "../theme";
 import { useFirebase } from "../contexts/FirebaseContext";
 
-type PhaseKey = "Preparation" | "Build Phase" | "Finishing";
+type PhaseKey = "preparation" | "buildPhase" | "finishing";
 
 type ImageItem =
   | { kind: "existing"; url: string }
@@ -17,7 +17,13 @@ interface ProjectPicturesPageProps {
   onLogout: () => void;
 }
 
-const PHASES: PhaseKey[] = ["Preparation", "Build Phase", "Finishing"];
+const PHASES: PhaseKey[] = ["preparation", "buildPhase", "finishing"];
+
+const PHASE_LABELS: Record<PhaseKey, string> = {
+  preparation: "Preparation",
+  buildPhase: "Build Phase",
+  finishing: "Finishing",
+};
 
 const sectionCard: React.CSSProperties = {
   background: C.surface,
@@ -59,21 +65,21 @@ const ProjectPicturesPage: React.FC<ProjectPicturesPageProps> = ({
 
   // Phases
   const [phaseItems, setPhaseItems] = useState<Record<PhaseKey, ImageItem[]>>({
-    Preparation: [],
-    "Build Phase": [],
-    Finishing: [],
+    preparation: [],
+    buildPhase: [],
+    finishing: [],
   });
   const [phaseDragOver, setPhaseDragOver] = useState<Record<PhaseKey, boolean>>(
     {
-      Preparation: false,
-      "Build Phase": false,
-      Finishing: false,
+      preparation: false,
+      buildPhase: false,
+      finishing: false,
     },
   );
   const phaseInputRefs = useRef<Record<PhaseKey, HTMLInputElement | null>>({
-    Preparation: null,
-    "Build Phase": null,
-    Finishing: null,
+    preparation: null,
+    buildPhase: null,
+    finishing: null,
   });
   const removedUrls = useRef<string[]>([]);
 
@@ -94,14 +100,14 @@ const ProjectPicturesPage: React.FC<ProjectPicturesPageProps> = ({
           (d.gallery ?? []).map((url: string) => ({ kind: "existing", url })),
         );
         setPhaseItems({
-          Preparation: (d.phases?.Preparation ?? []).map((url: string) => ({
+          preparation: (d.phases?.preparation ?? []).map((url: string) => ({
             kind: "existing",
             url,
           })),
-          "Build Phase": (d.phases?.["Build Phase"] ?? []).map(
+          buildPhase: (d.phases?.buildPhase ?? []).map(
             (url: string) => ({ kind: "existing", url }),
           ),
-          Finishing: (d.phases?.Finishing ?? []).map((url: string) => ({
+          finishing: (d.phases?.finishing ?? []).map((url: string) => ({
             kind: "existing",
             url,
           })),
@@ -228,9 +234,9 @@ const ProjectPicturesPage: React.FC<ProjectPicturesPageProps> = ({
 
       // Phases
       const phases: Record<PhaseKey, string[]> = {
-        Preparation: [],
-        "Build Phase": [],
-        Finishing: [],
+        preparation: [],
+        buildPhase: [],
+        finishing: [],
       };
       for (const phase of PHASES) {
         const hasNew = phaseItems[phase].some((i) => i.kind === "new");
@@ -679,7 +685,7 @@ const ProjectPicturesPage: React.FC<ProjectPicturesPageProps> = ({
           {/* Phases */}
           {PHASES.map((phase) => (
             <div key={phase} style={sectionCard}>
-              <div style={sectionTitle}>{phase}</div>
+              <div style={sectionTitle}>{PHASE_LABELS[phase]}</div>
               <input
                 ref={(el) => {
                   phaseInputRefs.current[phase] = el;
