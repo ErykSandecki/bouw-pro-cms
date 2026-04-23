@@ -579,9 +579,9 @@ const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                         <option value="" disabled>
                           Select a project type...
                         </option>
-                        {PROJECT_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
+                        {PROJECT_TYPES.map(({ label, value }) => (
+                          <option key={value} value={value}>
+                            {label}
                           </option>
                         ))}
                       </select>
@@ -605,9 +605,9 @@ const CreateProjectPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                           <option value="" disabled>
                             Select a subtype...
                           </option>
-                          {SUB_OPTIONS[projectType].map((s) => (
-                            <option key={s} value={s}>
-                              {s}
+                          {SUB_OPTIONS[projectType as ProjectType].map(({ label, value }) => (
+                            <option key={value} value={value}>
+                              {label}
                             </option>
                           ))}
                         </select>

@@ -1,15 +1,27 @@
-export const PROJECT_TYPES = [
-  "Renovations",
-  "New constructions",
-  "Huge scale",
-] as const;
+export const PROJECT_TYPES: { label: string; value: string }[] = [
+  { label: "Renovations", value: "renovations" },
+  { label: "New constructions", value: "newConstructions" },
+  { label: "Huge scale", value: "hugeScale" },
+];
 
-export type ProjectType = (typeof PROJECT_TYPES)[number];
+export type ProjectType = "renovations" | "newConstructions" | "hugeScale";
 
-export const SUB_OPTIONS: Record<ProjectType, string[]> = {
-  Renovations: ["Bathrooms", "Homes", "Annexes", "Luxury finishes"],
-  "New constructions": ["Newly built homes", "Luxury finishes", "Annexes"],
-  "Huge scale": ["Offices", "Public facilities"],
+export const SUB_OPTIONS: Record<ProjectType, { label: string; value: string }[]> = {
+  renovations: [
+    { label: "Bathrooms", value: "bathrooms" },
+    { label: "Homes", value: "homes" },
+    { label: "Annexes", value: "annexes" },
+    { label: "Luxury finishes", value: "luxuryFinishes" },
+  ],
+  newConstructions: [
+    { label: "Newly built homes", value: "newlyBuiltHomes" },
+    { label: "Luxury finishes", value: "luxuryFinishes" },
+    { label: "Annexes", value: "annexes" },
+  ],
+  hugeScale: [
+    { label: "Offices", value: "offices" },
+    { label: "Public facilities", value: "publicFacilities" },
+  ],
 };
 
 export const LOCALE_TO_LANG: Record<string, string> = {

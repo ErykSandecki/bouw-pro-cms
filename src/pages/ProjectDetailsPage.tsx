@@ -362,9 +362,9 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
                   style={{ ...inputStyle, cursor: "pointer" }}
                 >
                   <option value="">Select type…</option>
-                  {PROJECT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {PROJECT_TYPES.map(({ label, value }) => (
+                    <option key={value} value={value}>
+                      {label}
                     </option>
                   ))}
                 </select>
@@ -394,9 +394,9 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
                 >
                   <option value="">Select subtype…</option>
                   {projectType &&
-                    SUB_OPTIONS[projectType].map((s) => (
-                      <option key={s} value={s}>
-                        {s}
+                    SUB_OPTIONS[projectType as ProjectType]?.map(({ label, value }) => (
+                      <option key={value} value={value}>
+                        {label}
                       </option>
                     ))}
                 </select>

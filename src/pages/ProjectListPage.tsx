@@ -166,8 +166,8 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
             style={{ ...inputStyle, flex: "0 0 auto", minWidth: 160, cursor: "pointer" }}
           >
             <option value="">All types</option>
-            {PROJECT_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+            {PROJECT_TYPES.map(({ label, value }) => (
+              <option key={value} value={value}>{label}</option>
             ))}
           </select>
 
