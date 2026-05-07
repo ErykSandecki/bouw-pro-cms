@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, orderBy, query, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { getStorage, ref, deleteObject, listAll } from "firebase/storage";
 import Sidebar from "../components/Sidebar";
 import Icon from "../components/Icon";
 import { colors as C } from "../theme";
@@ -68,6 +69,8 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [hoveredStar, setHoveredStar] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -91,6 +94,36 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
     setProjects((prev) =>
       prev.map((p) => (p.id === project.id ? { ...p, favourite: next } : p))
     );
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const storage = getStorage(app);
+      const deleteFolder = async (path: string) => {
+        const listRef = ref(storage, path);
+        const { items, prefixes } = await listAll(listRef);
+        await Promise.all([
+          ...items.map((item) => deleteObject(item)),
+          ...prefixes.map((prefix) => deleteFolder(prefix.fullPath)),
+        ]);
+      };
+      await deleteFolder(`projects/${deleteTarget.id}`);
+      const db = getFirestore(app);
+      await deleteDoc(doc(db, "projects", deleteTarget.id));
+      setDeleteTarget(null);
+      setNameFilter("");
+      setTypeFilter("");
+      setDateFrom("");
+      setDateTo("");
+      setPage(1);
+      const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      setProjects(snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Project)));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -337,6 +370,28 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
                     )}
                   </div>
 
+                  {/* Delete */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: C.outline,
+                      flexShrink: 0,
+                      transition: "color 0.15s",
+                      borderRadius: 4,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = C.error)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = C.outline)}
+                  >
+                    <Icon name="delete" size={18} />
+                  </button>
+
                   {/* Status badge */}
                   <div
                     style={{
@@ -400,6 +455,105 @@ const ProjectListPage: React.FC<ProjectListPageProps> = ({ onLogout }) => {
           </>
         )}
       </main>
+
+      {deleteTarget && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => { if (!deleting) setDeleteTarget(null); }}
+        >
+          <div
+            style={{
+              background: C.surface,
+              border: `1px solid ${C.outlineVar}`,
+              borderRadius: 14,
+              padding: "32px 36px",
+              maxWidth: 420,
+              width: "90%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Icon name="delete_forever" size={24} style={{ color: C.error, flexShrink: 0 }} />
+              <h2 style={{ color: C.onSurface, fontSize: 16, fontWeight: 700, margin: 0 }}>
+                Delete project
+              </h2>
+            </div>
+            <p style={{ color: C.onSurfaceVar, fontSize: 13, margin: 0, lineHeight: 1.6 }}>
+              Are you sure you want to delete{" "}
+              <strong style={{ color: C.onSurface }}>
+                {deleteTarget.title?.nl || deleteTarget.title?.en || "this project"}
+              </strong>
+              ? All images will be permanently removed. This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                style={{
+                  background: "transparent",
+                  border: `1px solid ${C.outlineVar}`,
+                  borderRadius: 7,
+                  color: C.onSurfaceVar,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  padding: "8px 20px",
+                  cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
+                  opacity: deleting ? 0.5 : 1,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                disabled={deleting}
+                onClick={handleDelete}
+                style={{
+                  background: "rgba(255,180,171,0.12)",
+                  border: `1px solid rgba(255,180,171,0.3)`,
+                  borderRadius: 7,
+                  color: C.error,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: "8px 20px",
+                  cursor: deleting ? "not-allowed" : "pointer",
+                  fontFamily: "Inter, sans-serif",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  opacity: deleting ? 0.7 : 1,
+                }}
+              >
+                {deleting && (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 14,
+                      height: 14,
+                      border: `2px solid rgba(255,180,171,0.3)`,
+                      borderTopColor: C.error,
+                      borderRadius: "50%",
+                      animation: "spin 0.8s linear infinite",
+                    }}
+                  />
+                )}
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
